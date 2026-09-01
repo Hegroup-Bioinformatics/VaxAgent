@@ -1,0 +1,50 @@
+"c_host_id","c_host_name","c_scientific_name","c_taxonomy_id","c_submitted_by","c_curation_flag","c_pathogen_id"
+2,Human,Homo sapiens,9606,,10,0
+3,Mouse,Mus musculus,10090,,10,0
+4,Rat,Rattus,10114,,10,0
+5,Monkey,Platyrrhini,9479,,10,0
+6,Rabbit,Oryctolagus cuniculus,9986,,10,0
+7,Guinea pig,Cavia porcellus,10141,,10,0
+8,Chicken,Gallus gallus,9031,,10,0
+9,Ducks,Anas,8835,,10,0
+12,Cattle,Bos taurus,9913,,10,0
+13,Goat,Capra hircus,9925,,10,0
+15,Pig,Sus scrofa,9823,,10,0
+16,Hamster,Mesocricetus auratus,10036,,10,0
+17,Sheep,Ovis aries,9940,,10,0
+18,Horse,Equus caballus,9796,,10,0
+19,Ferret,Mustela putorius furo,9669,,10,0
+24,Copper Pheasant,Syrmaticus soemmerringii,9067,olenzek@umich.edu,10,0
+26,chinchillas,Chinchillidae,10150,yongqunh@umich.edu,10,0
+27,Water buffalo,Bubalus bubalis,391902,thotodd@umich.edu,10,0
+28,Squirrel,Spermophilus richardsonii,37591,thotodd@umich.edu,10,0
+29,Deer,Cervus elaphus,9860,thotodd@umich.edu,10,0
+30,Buffalo,Bison bison,9901,thotodd@umich.edu,10,0
+31,Bear,Ursus americanus,9643,thotodd@umich.edu,10,0
+32,Deer mouse,Peromyscus maniculatus,10042,thotodd@umich.edu,10,0
+33,Vole,Microtus ochrogaster,79684,thotodd@umich.edu,10,0
+34,Raven,Corvus corax,56781,thotodd@umich.edu,10,0
+35,Brown Trout,Salmo trutta,8032,byang91@gmail.com,10,0
+36,Dog,Canis familiaris,9615,byang91@gmail.com,10,0
+37,Cat,Felis catus,9685,byang91@gmail.com,10,0
+38,Turkey,Meleagris gallopavo,9103,byang91@gmail.com,10,0
+39,Macaque,Macaca fascicularis,9541,byang91@gmail.com,10,0
+40,Mongolian Gerbil,Meriones unguiculatus,10047,byang91@gmail.com,10,0
+41,Gerbil,Gerbillina,10045,byang91@gmail.com,10,0
+42,Chimpanzee,Pan troglodytes,9598,sayerss@umich.edu,10,0
+43,Bank vole,Clethrionomys glareolus,447135,byang91@gmail.com,10,0
+44,Tree shrew,Tupaiidae,9393,byang91@gmail.com,10,0
+45,Rainbow trout,Oncorhynchus mykiss,8022,byang91@gmail.com,10,0
+59,None,None,,zhaobin@umich.edu,10,0
+47,Gray wolf,Canis lupus,9612,zxiang@umich.edu,10,0
+48,Fish,Hyperotreti,117565,zxiang@umich.edu,10,0
+49,"Trouts, salmons & chars",Salmoninae,504568,zxiang@umich.edu,10,0
+50,Parrot,Psittacidae,9224,zxiang@umich.edu,10,0
+51,Birds,Passeroidea,175121,zxiang@umich.edu,10,0
+52,Catfishes,Siluriformes,7995,zxiang@umich.edu,10,0
+53,Carnivores,Vulpes,9625,zxiang@umich.edu,10,0
+54,sei whale,Balaenoptera borealis,9768,zxiang@umich.edu,10,0
+55,Baboon,Papio cynocephalus,9556,sayerss@umich.edu,10,0
+56,Raccoon,Procyon lotor,9654,becrac@umich.edu,0,0
+57,Woodchuck,Marmota monax,9995,becrac@umich.edu,0,0
+58,Zebrafish,Danio rerio,7955,becrac@umich.edu,0,0

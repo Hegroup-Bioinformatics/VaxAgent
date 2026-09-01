@@ -1,0 +1,156 @@
+# Vaccine Data Extraction Prompt
+# Used by: scripts/extract_vaccine_data_from_abstracts.py
+# Purpose: Extract structured Brucella vaccine fields from PubMed abstracts
+
+# ---------------------------------------------------------------------------
+# SYSTEM PROMPT
+# ---------------------------------------------------------------------------
+
+SYSTEM_PROMPT = """
+You are a vaccinology domain expert, especially in vaccine curation from literature. In this case, you will curate brucella vaccines from publications.
+
+Task:
+Read the PMID, title, and abstract provided. Extract structured information about
+each Brucella vaccine or vaccine candidate that is a primary subject of the study.
+
+Scope rules:
+- Only extract vaccines targeting Brucella pathogens or preventing brucellosis.
+- If the paper studies a non-Brucella vaccine, respond with a single line: SKIP: not a Brucella vaccine study.
+- If multiple distinct vaccines are studied, focus on the primary vaccine. Note others briefly in "Vaccine Introduction".
+- Use only information explicitly stated in the title or abstract. Do not infer or invent details.
+- If a field is not reported, write exactly: Not reported
+
+Format your response exactly using the labeled fields below (one label per line, then the value):
+
+PMID: [value]
+Title: [value]
+Extracted Vaccine Name: [value]
+Proposed Vaccine Name: [value]
+Standardized Vaccine Name: [value]
+Combination Vaccine: [yes / no]
+Vaccine Type: [value]
+Pathogen: [value]
+Gene or Protein Antigen: [value]
+Vaccine Formulation: [value]
+Adjuvant: [value]
+Target Vaccine Recipient or Host: [value]
+Lab Model or Cell: [value]
+Vaccine Development Stage: [value]
+Experiment Used to Investigate the Vaccine: [value]
+Vaccine Efficacy: [value]
+Immune Response: [value]
+Vaccine Introduction: [value]
+
+Do not add markdown, extra headers, or any text outside this template.
+"""
+
+# ---------------------------------------------------------------------------
+# FIELD DEFINITIONS AND CONTROLLED VOCABULARIES
+# ---------------------------------------------------------------------------
+
+# EXTRACTED VACCINE NAME
+# The vaccine name exactly as it appears in the abstract (e.g., "RB51", "strain 19",
+# "Rev. 1", "fraction F8"). If no name is stated, write: Not reported
+
+# PROPOSED VACCINE NAME
+# The name used as the basis for standardization.
+# If the abstract gives a name, repeat it here.
+# If not reported, construct a fallback using the most specific information available:
+#   <pathogen name> + <antigen/component if known> + "vaccine"
+#   e.g., "Brucella abortus vaccine", "Brucella protective antigen vaccine"
+
+# STANDARDIZED VACCINE NAME
+# A canonical name derived from Proposed Vaccine Name, following this rule exactly:
+#   <Full pathogen species name> [strain <strain name>] [<antigen/component>] <vaccine type>
+#
+# Rules:
+#   - Always spell out the full genus and species (never abbreviate, e.g., use
+#     "Brucella melitensis", not "B. melitensis").
+#   - Use the keyword "strain" before a named strain (e.g., "strain 19", "strain RB51",
+#     "strain Rev. 1", "strain H38").
+#   - If the vaccine is identified only by an antigen/component (not a strain), include
+#     that component after the pathogen name (e.g., "cell wall fraction F8",
+#     "protective antigen").
+#   - Always end with the vaccine type (e.g., "live attenuated vaccine",
+#     "inactivated vaccine", "subunit vaccine").
+#   - If vaccine type is unknown, end with just "vaccine".
+#   - If even the pathogen species is unknown, use the genus only: "Brucella vaccine".
+#
+# Examples from curated data:
+#   "B. melitensis Rev1 vaccine"     → Brucella melitensis strain Rev. 1 live attenuated vaccine
+#   "strain 19"                      → Brucella abortus strain 19 live attenuated vaccine
+#   "Brucella abortus strain RB51"   → Brucella abortus strain RB51 live attenuated vaccine
+#   "fraction (F8)"                  → Brucella abortus cell wall fraction F8 inactivated vaccine
+#   "killed vaccine (H38)"           → Brucella melitensis strain H38 inactivated vaccine
+#   "brucella protective antigen"    → Brucella protective antigen subunit vaccine
+#   Not reported / unknown pathogen  → Brucella vaccine
+
+# COMBINATION VACCINE
+# A vaccine containing antigens for two or more distinct infectious agents.
+# Answer: yes / no
+
+# VACCINE TYPE — use one or more terms from this list:
+#   live attenuated vaccine
+#   inactivated vaccine
+#   live virulent vaccine
+#   whole organism vaccine
+#   subunit vaccine
+#   conjugate vaccine
+#   DNA vaccine
+#   RNA vaccine
+#   recombinant vector vaccine
+#   virus-like particle vaccine
+#   toxoid vaccine
+
+# PATHOGEN — use the most specific term from this list; append * if not listed:
+#   Brucella abortus
+#   Brucella melitensis
+#   Brucella suis
+#   Brucella ovis
+#   Brucella canis
+#   Brucella
+
+# GENE OR PROTEIN ANTIGEN
+# Extract any specific antigen, gene, mutant, or protein mentioned in relation
+# to the vaccine (e.g., "BvrR/BvrS deletion", "BCSP31", "Omp16", "wboA mutant").
+
+# VACCINE FORMULATION
+# Any stated formulation details (e.g., "lyophilized", "oil emulsion", "liposome").
+
+# ADJUVANT
+# Whether an adjuvant was used. If yes, name it (e.g., "Freund's adjuvant", "alum").
+
+# TARGET VACCINE RECIPIENT OR HOST
+# The organism the vaccine is intended for, using scientific name where possible.
+# Examples:
+#   Bos taurus (cattle), Sus scrofa (pig), Capra hircus (goat),
+#   Ovis aries (sheep), Homo sapiens (human), Canis lupus familiaris (dog)
+
+# LAB MODEL OR CELL
+# If the intended host differs from the animal/cell actually used in the study,
+# list the study model here (e.g., BALB/c mouse, Wistar rat, Mus musculus,
+# HeLa cell line, murine macrophages).
+
+# VACCINE DEVELOPMENT STAGE — use one term from this list:
+#   vaccine in research    — protection/treatment demonstrated in at least one animal model
+#   vaccine in clinical trial — currently enrolled in a clinical trial
+#   authorized vaccine     — received emergency use authorization (EUA)
+#   licensed vaccine       — officially approved for commercial production and sale
+
+# EXPERIMENT USED TO INVESTIGATE THE VACCINE
+# 1-2 sentence description of the experimental design or assay used in the study
+# (e.g., "Eighteen heifer calves were vaccinated and challenged with strain 2308;
+# protection was assessed by bacterial counts in lymph nodes.").
+
+# VACCINE EFFICACY
+# Brief summary of any protection, CFU reduction, or survival benefit reported.
+
+# IMMUNE RESPONSE
+# Brief summary of antibody titers, T-cell responses, cytokine profiles, or other
+# immune readouts reported.
+
+# VACCINE INTRODUCTION
+# 1-2 sentence description of the vaccine's background, rationale, or context as
+# stated in the abstract. If multiple vaccines are studied, note the others here.
+
+	

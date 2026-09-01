@@ -1,0 +1,55 @@
+Task 5: convert the new Brucella vaccine candidates into VIOLIN loading-ready files.
+
+Use the examples in the `violin-data` folder as the source of truth for formatting and field usage.
+
+Important context:
+- Brucella vaccines should use `Brucella spp.` with `c_pathogen_id = 8`.
+- The primary source file for this task is `outputs/new_brucella_vaccines.xlsx`.
+
+Deliverables:
+1. A `t_reference.csv`-style file for new references.
+2. A `t_vaccine.csv`-style file for the vaccine records.
+3. Reference links appended in the description field after the records are loaded.
+
+Step 1: build the reference file
+- Review each row in `outputs/new_brucella_vaccines.xlsx` and extract the PMID.
+- Check whether that PMID already exists in the reference data for `c_pathogen_id = 8`.
+- If the PMID is not already represented, create a new reference entry.
+- Use PubMed to verify publication details such as authors, year, journal, volume, issue, and pages.
+- Follow the formatting pattern in the example `t_reference.csv`.
+
+Include these fields when available:
+- `c_pathogen_id`: `8`
+- `c_reference_name`: first author last name plus `,` plus year; if there are multiple authors, append `et al` after the first author last name
+- `c_reference_type`: `journal`
+- `c_authors`: full author list
+- `c_title`: paper title
+- `c_year`: publication year
+- `c_volume`: journal volume
+- `c_issue`: journal issue
+- `c_pages`: page range
+- `c_journal_book_name`: journal name
+
+Step 2: resolve host IDs
+- Find host IDs from `t_host.csv`.
+- Match `Lab Model or Cell` and `Target Vaccine Recipient or Host` against `c_host_name` and `c_scientific_name`.
+- If the term is a cell line or cell type, match the organism species the cell was derived from.
+
+Step 3: build the vaccine file
+- Convert `outputs/new_brucella_vaccines.xlsx` into a `t_vaccine.csv`-style file.
+- Use the IDs resolved in the previous steps.
+- Follow the column structure and conventions shown in the example VIOLIN input files.
+
+Step 4: append loaded reference IDs
+- After the records are loaded into the database, append the reference tag in `c_description`.
+- Use the format `[Ref:c_reference_id]`.
+
+General rules:
+- Use the existing example files as the source of truth for layout and formatting.
+- Do not invent missing IDs or publication details.
+- If a field cannot be confirmed, leave it blank rather than guessing.
+- Keep the output consistent with VIOLIN loading requirements.
+
+
+
+

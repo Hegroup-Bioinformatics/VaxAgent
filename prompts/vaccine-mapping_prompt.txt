@@ -1,0 +1,112 @@
+Map extracted vaccine records in `vaccine-data/brucella_vaccine_llm_extraction_results.csv` to matching entries in VIOLIN and the Vaccine Ontology (VO).
+
+Goal:
+- Determine whether each extracted vaccine already exists in VIOLIN.
+- Determine whether each extracted vaccine corresponds to a VO term.
+- If a match is found, record the matched VIOLIN vaccine ID and vaccine name, and/or the matched VO ID and VO label.
+- Provide mapping notes and a confidence assessment for every result.
+
+Primary input fields from the extraction file:
+- `Extracted Vaccine Name`
+- `Proposed Vaccine Name`
+- `Standardized Vaccine Name`
+- `Vaccine Type`
+- `Pathogen`
+- `PMID`
+- `Target Vaccine Recipient or Host`
+- `Lab Model or Cell`
+
+Mapping principles:
+1. Use `Standardized Vaccine Name` as the strongest vaccine-name signal.
+2. If two records have the same `Standardized Vaccine Name`, treat them as the same vaccine unless other evidence clearly contradicts that conclusion.
+3. If `Standardized Vaccine Name` is missing, ambiguous, or not sufficient, use `Proposed Vaccine Name` and `Extracted Vaccine Name` as alternative name signals for the same record.
+4. Support name-based mapping with additional evidence from:
+	- vaccine type
+	- pathogen
+	- PMID
+	- target vaccine recipient or host
+	- lab model or cell
+5. For VIOLIN mapping, treat PMID as the primary mapping signal.
+6. If PMID is matched to one or more VIOLIN candidates, use vaccine name as the next discriminator.
+7. If the vaccine is not a Brucella vaccine based on pathogen, return `not mapped` for VIOLIN directly.
+8. In VIOLIN, host-related evidence may appear in fields corresponding to intended host species or model host.
+9. Prefer exact semantic matches over partial lexical matches.
+10. Do not force a match when the evidence is weak or conflicting.
+
+VIOLIN mapping guidance:
+- Check whether the extracted vaccine matches an existing VIOLIN vaccine entry.
+- Use PMID first as the primary signal.
+- If PMID matches VIOLIN references, then use vaccine name to choose the best candidate.
+- After PMID and vaccine-name checks, use pathogen, host, and vaccine type as supporting filters.
+- If pathogen is not Brucella (or Brucella spp.), set VIOLIN result to `not mapped`.
+- If the match is exact, mark it as a high-confidence VIOLIN match.
+- If the match is plausible but not exact, and the PMID matches exactly, treat it as high-confidence and explain the basis for the match.
+- If the match is plausible but not exact and there is no exact PMID support, record it as a possible match and explain the uncertainty.
+- If no credible match is found, leave the VIOLIN ID blank and mark the record as not mapped to VIOLIN.
+
+VO mapping guidance:
+- Check whether the extracted vaccine corresponds to an existing VO term using local VO ROBOT template file `inputs/vaccine.csv`.
+- Parse `inputs/vaccine.csv` as follows:
+	- row 1 = headers
+	- row 2 = ROBOT template directives
+	- data rows start from row 3
+- Ignore columns where row 2 cell is empty.
+- Use PMID from extraction as the primary mapping signal to VO.
+- For VO candidate PMIDs, read PMIDs from the `definition source` column.
+- Only keep VO candidates that are Brucella-related (for example based on `immunizes against pathogen`, `violin_pathogen`, and/or VO label text containing Brucella context).
+- If extraction pathogen is not Brucella, set VO result to `not mapped` directly with note `no matched VO terms`.
+- If a VO term is found, record the VO ID and preferred VO label.
+- Keep VO IDs in the same ROBOT template style (for example `VO:0000021`, not `VO_0000021`).
+- If multiple VO terms share the same PMID, use vaccine name alignment to select the best candidate.
+- If no credible VO term is found, leave the VO ID blank and mark the record as not mapped to VO.
+
+Required output columns:
+Keep all columns from the input file and add the following mapping fields:
+- Matched VIOLIN ID
+- Matched VIOLIN Vaccine Name
+- VIOLIN Match Status
+- Matched VO ID
+- Matched VO Label
+- VO Match Status
+- Mapping Notes
+- Confidence
+
+At minimum, the final output must preserve these original input columns:
+- PMID
+- Extracted Vaccine Name
+- Proposed Vaccine Name
+- Standardized Vaccine Name
+- Vaccine Type
+- Pathogen
+- Target Vaccine Recipient or Host
+- Lab Model or Cell
+
+Required status values:
+- `exact`
+- `possible`
+- `not mapped`
+
+Confidence values:
+- `high`
+- `medium`
+- `low`
+
+Confidence guidance:
+- `high`: name and supporting evidence agree strongly, or a non-exact name match is strongly supported by an exact PMID match.
+- `medium`: mapping is plausible but not fully exact, or some supporting fields are missing.
+- `low`: evidence is weak, conflicting, or highly incomplete.
+
+Mapping notes requirements:
+- Briefly explain why the VIOLIN and/or VO match was selected or rejected.
+- Mention the strongest supporting evidence, such as exact standardized name match, shared PMID, matching pathogen, or matching host.
+- If a non-Brucella pathogen caused automatic VIOLIN `not mapped`, state that explicitly in notes.
+- If there is ambiguity, state it explicitly.
+
+Output requirement:
+- Save the final mapping results in CSV format as the primary deliverable.
+- Excel output is optional and can be generated as a secondary file.
+
+General constraints:
+- Use only the evidence available from the extraction file, VIOLIN data, and local VO template data.
+- Do not invent IDs, labels, PMIDs, or vaccine names.
+- If no reliable match can be made, return `not mapped` rather than guessing.
