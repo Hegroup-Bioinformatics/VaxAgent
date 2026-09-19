@@ -317,6 +317,139 @@ def group_rows(rows: list[dict[str, str]]) -> list[list[dict[str, str]]]:
     return [groups[key] for key in order]
 
 
+# Manually reviewed split overrides (see project verification notes for the 10 confirmed
+# groups). Each entry matches exactly one source row by (PMID, current Standardized
+# Vaccine Name), with an optional Extracted Vaccine Name substring for the one PMID that
+# contains two distinct constructs under the same name (18462974). Matched rows have their
+# Standardized Vaccine Name rewritten in memory only, before grouping, so group_rows()
+# naturally separates them. Rows from the same PMID under a *different* current name
+# (e.g. 8250382's SOD row, 22546330's Omp16 row) are never touched.
+MANUAL_SPLIT_OVERRIDES: list[dict[str, str]] = [
+    # A. Brucella multi-epitope subunit vaccine
+    {"pmid": "36940016", "match_name": "Brucella multi-epitope subunit vaccine",
+     "new_name": "Brucella multi-epitope subunit vaccine (seven-epitope, four-species design)"},
+    {"pmid": "39148966", "match_name": "Brucella multi-epitope subunit vaccine",
+     "new_name": "Brucella multi-epitope subunit vaccine (BhuA/polysaccharide export protein design)"},
+
+    # B. Brucella abortus S19 Δ31K live attenuated vaccine (8250382 + 1456536 stay merged; only 26946956 splits out)
+    {"pmid": "26946956", "match_name": "Brucella abortus S19 \u039431K live attenuated vaccine",
+     "new_name": "Brucella abortus S19A \u0394mglA live attenuated vaccine"},
+
+    # C. RAP1 vector vaccine: PMID 18462974 has two rows under the same name, disambiguated by Extracted Vaccine Name
+    {"pmid": "18462974", "match_name": "Brucella abortus strain 19 recombinant vector vaccine expressing Babesia bovis RAP1",
+     "extracted_contains": "(S19pBB-RAP1)",
+     "new_name": "Brucella abortus strain 19 recombinant vector vaccine expressing Babesia bovis RAP1 (S19pBB-RAP1, beta-galactosidase fusion)"},
+    {"pmid": "18462974", "match_name": "Brucella abortus strain 19 recombinant vector vaccine expressing Babesia bovis RAP1",
+     "extracted_contains": "(S19pBB19-RAP1)",
+     "new_name": "Brucella abortus strain 19 recombinant vector vaccine expressing Babesia bovis RAP1 (S19pBB19-RAP1, OMP19 fusion)"},
+
+    # D. Brucella abortus U-Omp19 subunit vaccine
+    {"pmid": "26707377", "match_name": "Brucella abortus U-Omp19 subunit vaccine",
+     "new_name": "Brucella abortus U-Omp19 subunit vaccine (co-delivered with OVA/Trypanosoma cruzi antigens)"},
+    {"pmid": "32536545", "match_name": "Brucella abortus U-Omp19 subunit vaccine",
+     "new_name": "Brucella abortus U-Omp19 subunit vaccine (co-formulated with dmLT, oral ETEC application)"},
+
+    # E. Brucella abortus L7/L12 subunit vaccine (7927808 + 20876984 + 25930114 stay merged; only 19824392 splits out)
+    {"pmid": "19824392", "match_name": "Brucella abortus L7/L12 subunit vaccine",
+     "new_name": "Brucella abortus HSA-L7/L12 fusion subunit vaccine"},
+
+    # F. Brucella lumazine synthase subunit vaccine
+    {"pmid": "15390265", "match_name": "Brucella lumazine synthase subunit vaccine",
+     "new_name": "Brucella lumazine synthase (BLS) scaffold platform characterization"},
+    {"pmid": "16455994", "match_name": "Brucella lumazine synthase subunit vaccine",
+     "new_name": "Brucella lumazine synthase (BLS) scaffold platform characterization"},
+    {"pmid": "39547601", "match_name": "Brucella lumazine synthase subunit vaccine",
+     "new_name": "Brucella lumazine synthase (BLS) + CHSPE adjuvant subunit vaccine"},
+
+    # G. Brucella melitensis Omp31 recombinant vector vaccine (three distinct vector platforms)
+    {"pmid": "9987174", "match_name": "Brucella melitensis Omp31 recombinant vector vaccine",
+     "new_name": "Brucella melitensis Omp31 recombinant vector vaccine (plain E. coli)"},
+    {"pmid": "22546330", "match_name": "Brucella melitensis Omp31 recombinant vector vaccine",
+     "new_name": "Brucella melitensis Omp31 recombinant vector vaccine (invasive E. coli, inv/hly-engineered)"},
+    {"pmid": "32661939", "match_name": "Brucella melitensis Omp31 recombinant vector vaccine",
+     "new_name": "Brucella melitensis Omp31 recombinant vector vaccine (Lactococcus lactis surface display)"},
+
+    # H. Brucella melitensis BP26 recombinant vector vaccine
+    {"pmid": "22546330", "match_name": "Brucella melitensis BP26 recombinant vector vaccine",
+     "new_name": "Brucella melitensis BP26 recombinant vector vaccine (invasive E. coli, inv/hly-engineered)"},
+    {"pmid": "31380001", "match_name": "Brucella melitensis bp26 recombinant vector vaccine",
+     "new_name": "Brucella melitensis bp26 recombinant vector vaccine (Lactococcus lactis, cloning/expression only)"},
+
+    # I. Brucella abortus omp25 recombinant vector vaccine
+    {"pmid": "37276346", "match_name": "Brucella abortus omp25 recombinant vector vaccine",
+     "new_name": "Brucella abortus omp25 recombinant vector vaccine (Lactococcus lactis, oral delivery)"},
+    {"pmid": "42119393", "match_name": "Brucella abortus OMP25 recombinant vector vaccine",
+     "new_name": "Brucella abortus OMP25 recombinant vector vaccine (recombinant goatpox virus)"},
+
+    # J. Brucella abortus Cu-Zn superoxide dismutase recombinant vector vaccine
+    {"pmid": "18164561", "match_name": "Brucella abortus Cu-Zn superoxide dismutase recombinant vector vaccine",
+     "new_name": "Brucella abortus Cu-Zn superoxide dismutase recombinant vector vaccine (Semliki Forest virus, SFV-SOD)"},
+    {"pmid": "7571368", "match_name": "Brucella abortus Cu-Zn superoxide dismutase recombinant vector vaccine",
+     "new_name": "Brucella abortus Cu/Zn superoxide dismutase recombinant vector vaccine (vaccinia virus, vUBSOD)"},
+]
+
+# PMIDs manually confirmed to require combined field content (kept as ONE merged record;
+# split/merge identity remains NEEDS_MORE_EVIDENCE pending fragment-boundary confirmation).
+TF_BP26_OMP31_PMIDS = {"24847419", "39927221"}
+
+# Source rows manually flagged as possible EXCLUDE_AS_NON_VACCINE candidates (kept in the
+# output; not removed). Documented in the summary for human review only.
+POSSIBLE_NON_VACCINE_PMIDS = [
+    ("19824392", "Expression of human serum albumin--L7/L12 (Brucella abortus ribosomal protein) fusion protein in Saccharomyces cerevisiae",
+     "Pure yeast expression/purification paper; no immune response or efficacy data reported."),
+    ("15390265", "Engineering of a polymeric bacterial protein as a scaffold for the multiple display of peptides",
+     "Establishes BLS as a generic peptide-display scaffold; no disease-specific antigen selected, no efficacy data."),
+    ("16455994", "A polymeric bacterial protein activates dendritic cells via TLR4",
+     "Characterizes BLS's intrinsic TLR4-dependent adjuvant mechanism; no foreign antigen, no efficacy data."),
+    ("31380001", "Cloning and Expression of B. mellitensis bp26 Gene in Lactococcus lactis as a Food Grade Vaccine",
+     "Cloning/expression-only paper; authors explicitly defer vaccine evaluation to future work; no immunization data."),
+]
+
+
+def apply_manual_split_overrides(
+    rows: list[dict[str, str]], overrides: list[dict[str, str]]
+) -> list[dict[str, str]]:
+    """Rewrite Standardized Vaccine Name on manually confirmed rows only, before grouping.
+
+    Matches on (PMID, current Standardized Vaccine Name), plus an optional Extracted
+    Vaccine Name substring for rows that share both PMID and name. Rows that do not match
+    any override (including unrelated rows sharing a PMID under a different name) are
+    returned unchanged.
+    """
+    updated: list[dict[str, str]] = []
+    match_counts = [0 for _ in overrides]
+    for row in rows:
+        pmid = clean(row.get("PMID", ""))
+        current_name_key = normalize_key(row.get("Standardized Vaccine Name", ""))
+        matched_idx = None
+        for idx, override in enumerate(overrides):
+            if pmid != override["pmid"]:
+                continue
+            if current_name_key != normalize_key(override["match_name"]):
+                continue
+            extracted_contains = override.get("extracted_contains")
+            if extracted_contains and extracted_contains not in clean(row.get("Extracted Vaccine Name", "")):
+                continue
+            matched_idx = idx
+            break
+        if matched_idx is not None:
+            match_counts[matched_idx] += 1
+            new_row = dict(row)
+            new_row["Standardized Vaccine Name"] = overrides[matched_idx]["new_name"]
+            updated.append(new_row)
+        else:
+            updated.append(row)
+
+    for idx, override in enumerate(overrides):
+        if match_counts[idx] != 1:
+            print(
+                f"WARNING: manual split override #{idx} (PMID {override['pmid']}) matched "
+                f"{match_counts[idx]} row(s) (expected exactly 1): {override['new_name']!r}",
+                flush=True,
+            )
+    return updated
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build Task 5 VIOLIN loading files from Rooney-reviewed candidates.")
     parser.add_argument("--input-xlsx", default="outputs/new_brucella_vaccines_rooney_reviewed.xlsx")
@@ -334,6 +467,7 @@ def main() -> None:
     args = parse_args()
 
     reviewed_rows = load_reviewed_rows(Path(args.input_xlsx))
+    reviewed_rows = apply_manual_split_overrides(reviewed_rows, MANUAL_SPLIT_OVERRIDES)
     existing_references = load_csv_rows(Path(args.reference_csv))
     existing_vaccines = load_csv_rows(Path(args.vaccine_csv))
     host_rows = load_csv_rows(Path(args.host_csv))
@@ -448,17 +582,49 @@ def main() -> None:
         vaccine_id = str(next_vaccine_id)
         next_vaccine_id += 1
 
+        # Targeted field-content correction for the manually reviewed TF/BP26/Omp31 group
+        # only (identity kept merged pending fragment-boundary confirmation; see
+        # task5_summary.md). This does not alter field-building for any other group.
+        group_pmid_set = {clean(r.get("PMID", "")) for r in group}
+        if TF_BP26_OMP31_PMIDS <= group_pmid_set:
+            antigen = "TF; BP26 (93-111); Omp31 (48-74); also referred to as TF/Bp26/Omp31 (TBO) chimeric antigen"
+            adjuvant = "yes; calcium phosphate nanoparticles (CaP/TBO); iron oxide nanoparticles (IO/TBO)"
+            preparation = (
+                "In silico-designed synthetic chimeric gene encoding TF, BP26 (93-111), and Omp31 (48-74). "
+                "A TF/Bp26/Omp31 (TBO) recombinant protein was later produced and loaded onto calcium "
+                "phosphate (CaP/TBO) or iron oxide (IO/TBO) nanoparticles for subcutaneous immunization."
+            )
+            description = (
+                "The study addresses the need for a protective subunit vaccine against Brucella melitensis due to "
+                "problems with the live attenuated Rev. 1 vaccine used in ovine brucellosis prophylaxis. A synthetic "
+                "chimeric gene encoding fragments of TF, BP26 (93-111), and Omp31 (48-74) was designed and modeled in "
+                "silico to predict the 3D structure. A TF/Bp26/Omp31 (TBO) chimeric antigen was subsequently expressed "
+                "as recombinant protein, loaded onto calcium phosphate (CaP/TBO) and iron oxide (IO/TBO) nanoparticles, "
+                "and administered subcutaneously to mice challenged with virulent Brucella melitensis 16M; CaP/TBO "
+                "nanoparticles provided higher protection than IO/TBO. Note: exact fragment-boundary/sequence identity "
+                "between the in silico design and the TBO construct has not been independently confirmed from the "
+                "available text."
+            )
+            tags = "".join(f"[Ref:{rid}]" for rid in ref_ids if rid)
+            if tags:
+                description = f"{description} {tags}".strip()
+        else:
+            antigen = "" if is_blank(rep.get("Gene or Protein Antigen", "")) else clean(rep.get("Gene or Protein Antigen", ""))
+            adjuvant = "" if is_blank(rep.get("Adjuvant", "")) else clean(rep.get("Adjuvant", ""))
+            preparation = "" if is_blank(rep.get("Vaccine Formulation", "")) else clean(rep.get("Vaccine Formulation", ""))
+            description = build_description(rep, ref_ids)
+
         row = {field: "" for field in VACCINE_FIELDS}
         row.update({
             "c_vaccine_id": vaccine_id,
             "c_vaccine_name": std_name,
             "c_type": normalize_type(rep.get("Vaccine Type", "")),
             "c_is_combination_vaccine": is_combo,
-            "c_description": build_description(rep, ref_ids),
-            "c_adjuvant": "" if is_blank(rep.get("Adjuvant", "")) else clean(rep.get("Adjuvant", "")),
+            "c_description": description,
+            "c_adjuvant": adjuvant,
             "c_pathogen_id": BRUCELLA_PATHOGEN_ID,
-            "c_preparation": "" if is_blank(rep.get("Vaccine Formulation", "")) else clean(rep.get("Vaccine Formulation", "")),
-            "c_antigen": "" if is_blank(rep.get("Gene or Protein Antigen", "")) else clean(rep.get("Gene or Protein Antigen", "")),
+            "c_preparation": preparation,
+            "c_antigen": antigen,
             "c_curation_flag": "10",
             "c_status": normalize_status(rep.get("Vaccine Development Stage", "")),
             "c_host_species": host_species,
@@ -499,6 +665,11 @@ def main() -> None:
     ]
     for note in pathogen_conflicts:
         summary_lines.append(f"  - {note}")
+    summary_lines.append("")
+    summary_lines.append("## Manual review: possible non-vaccine source rows (not excluded)")
+    summary_lines.append("The following source rows were manually reviewed and flagged as possibly not representing a tested vaccine candidate (e.g. pure protein-expression/cloning-only papers, or platform/mechanism-characterization studies with no disease-specific antigen or efficacy data). They remain included in the output above; no rows have been removed. Final inclusion/exclusion is deferred to human review.")
+    for pmid, title, reason in POSSIBLE_NON_VACCINE_PMIDS:
+        summary_lines.append(f"- PMID {pmid} — \"{title}\" — {reason}")
     summary_lines.append("")
     summary_lines.append("## Notes")
     summary_lines.append("- c_pathogen_id is fixed at 8 (Brucella spp.) for all new records, per prompts/vaccine-to-violin_prompt.txt.")

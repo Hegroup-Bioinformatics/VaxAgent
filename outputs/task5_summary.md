@@ -2,22 +2,28 @@
 
 - Source workbook: `outputs/new_brucella_vaccines_rooney_reviewed.xlsx` (sheet `candidate_existing_match`, read-only, not modified)
 - Candidate rows reviewed: 760
-- Distinct vaccine records after dedup by Standardized Vaccine Name: 682
+- Distinct vaccine records after dedup by Standardized Vaccine Name: 693
 - Unique PMIDs referenced: 605
 - New reference rows created: 577 (new c_reference_id 6867-7443)
-- New vaccine rows created: 682 (new c_vaccine_id 8291-8972)
+- New vaccine rows created: 693 (new c_vaccine_id 8291-8983)
 - PMIDs already present in t_reference.csv for pathogen_id=8: 28
 
 ## Host resolution
-- Target Vaccine Recipient or Host resolved: 209/682 vaccine groups
-- Lab Model or Cell resolved to c_model_host: 553/682 vaccine groups
+- Target Vaccine Recipient or Host resolved: 210/693 vaccine groups
+- Lab Model or Cell resolved to c_model_host: 559/693 vaccine groups
 
 ## Items flagged for manual review
 - PMIDs with unresolved/incomplete PubMed metadata (0): none
-- Vaccine groups with inconsistent Pathogen text across constituent rows (3, informational only since c_pathogen_id is fixed at 8 per prompt instructions):
-  - Brucella multi-epitope subunit vaccine: ['Brucella', 'Brucella melitensis; Brucella abortus; Brucella suis; Brucella ovis']
+- Vaccine groups with inconsistent Pathogen text across constituent rows (2, informational only since c_pathogen_id is fixed at 8 per prompt instructions):
   - Brucella Omp16 subunit vaccine: ['Brucella', 'Brucella spp.']
   - Brucella protective antigen subunit vaccine: ['Brucella', 'Brucella melitensis; Brucella abortus']
+
+## Manual review: possible non-vaccine source rows (not excluded)
+The following source rows were manually reviewed and flagged as possibly not representing a tested vaccine candidate (e.g. pure protein-expression/cloning-only papers, or platform/mechanism-characterization studies with no disease-specific antigen or efficacy data). They remain included in the output above; no rows have been removed. Final inclusion/exclusion is deferred to human review.
+- PMID 19824392 — "Expression of human serum albumin--L7/L12 (Brucella abortus ribosomal protein) fusion protein in Saccharomyces cerevisiae" — Pure yeast expression/purification paper; no immune response or efficacy data reported.
+- PMID 15390265 — "Engineering of a polymeric bacterial protein as a scaffold for the multiple display of peptides" — Establishes BLS as a generic peptide-display scaffold; no disease-specific antigen selected, no efficacy data.
+- PMID 16455994 — "A polymeric bacterial protein activates dendritic cells via TLR4" — Characterizes BLS's intrinsic TLR4-dependent adjuvant mechanism; no foreign antigen, no efficacy data.
+- PMID 31380001 — "Cloning and Expression of B. mellitensis bp26 Gene in Lactococcus lactis as a Food Grade Vaccine" — Cloning/expression-only paper; authors explicitly defer vaccine evaluation to future work; no immunization data.
 
 ## Notes
 - c_pathogen_id is fixed at 8 (Brucella spp.) for all new records, per prompts/vaccine-to-violin_prompt.txt.
