@@ -436,6 +436,7 @@ def apply_manual_split_overrides(
             match_counts[matched_idx] += 1
             new_row = dict(row)
             new_row["Standardized Vaccine Name"] = overrides[matched_idx]["new_name"]
+            new_row["_manual_override"] = True
             updated.append(new_row)
         else:
             updated.append(row)
@@ -450,12 +451,98 @@ def apply_manual_split_overrides(
     return updated
 
 
+ROW_REF_PATTERN = re.compile(r"^ROW:(\d+)-(\d+)$", re.IGNORECASE)
+
+
+def load_task6_decisions(csv_path: Path) -> dict[tuple[str, str], dict[str, str]]:
+    """Read outputs/task6_new_vaccine_review_full.csv into a (PMID, Vaccine Row) -> row dict."""
+    decisions: dict[tuple[str, str], dict[str, str]] = {}
+    with csv_path.open(encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle):
+            key = (clean(row.get("PMID", "")), clean(row.get("Vaccine Row", "")))
+            decisions[key] = row
+    return decisions
+
+
+def apply_task6_filter(
+    rows: list[dict[str, str]], task6: dict[tuple[str, str], dict[str, str]]
+) -> tuple[list[dict[str, str]], dict[str, object]]:
+    """Keep only Confirmed New rows, joined on (PMID, Vaccine Row); rename non-override
+    rows to the Task 6 Final Standardized Vaccine Name where it differs. Asserts a
+    complete one-to-one mapping between `rows` and `task6` before filtering.
+    """
+    seen_keys: set[tuple[str, str]] = set()
+    for row in rows:
+        key = (clean(row.get("PMID", "")), clean(row.get("Vaccine Row", "")))
+        if key in seen_keys:
+            raise ValueError(f"Duplicate (PMID, Vaccine Row) key in source rows: {key}")
+        seen_keys.add(key)
+        if key not in task6:
+            raise ValueError(f"Source row {key} has no matching Task 6 decision")
+    unmatched_task6_keys = set(task6) - seen_keys
+    if unmatched_task6_keys:
+        raise ValueError(f"Task 6 has {len(unmatched_task6_keys)} key(s) not present in source rows: {sorted(unmatched_task6_keys)[:5]}...")
+
+    eligible: list[dict[str, str]] = []
+    renamed = 0
+    status_counts: dict[str, int] = defaultdict(int)
+    for row in rows:
+        key = (clean(row.get("PMID", "")), clean(row.get("Vaccine Row", "")))
+        decision = task6[key]
+        status = clean(decision.get("Final New Vaccine Status", ""))
+        status_counts[status] += 1
+        if status != "Confirmed New":
+            continue
+        new_row = dict(row)
+        if not row.get("_manual_override"):
+            final_name = clean(decision.get("Final Standardized Vaccine Name", ""))
+            if final_name and normalize_key(final_name) != normalize_key(row.get("Standardized Vaccine Name", "")):
+                new_row["Standardized Vaccine Name"] = final_name
+                renamed += 1
+        eligible.append(new_row)
+
+    stats = {"status_counts": dict(status_counts), "eligible": len(eligible), "renamed": renamed}
+    return eligible, stats
+
+
+def check_q3_dependencies(task6: dict[tuple[str, str], dict[str, str]]) -> dict[str, object]:
+    """Validate Q3 Same As references for all Duplicate/Existing Candidate rows."""
+    row_targets_ok = 0
+    row_targets_not_confirmed_new = []
+    vo_violin_refs = 0
+    unresolved = []
+    for key, decision in task6.items():
+        if clean(decision.get("Final New Vaccine Status", "")) != "Duplicate/Existing Candidate":
+            continue
+        same_as = clean(decision.get("Q3 Same As", ""))
+        m = ROW_REF_PATTERN.match(same_as)
+        if m:
+            target_key = (m.group(1), m.group(2))
+            target_status = clean(task6.get(target_key, {}).get("Final New Vaccine Status", ""))
+            if target_status == "Confirmed New":
+                row_targets_ok += 1
+            else:
+                row_targets_not_confirmed_new.append((key, same_as, target_status or "MISSING"))
+        elif same_as.upper().startswith("VO:") or same_as.upper().startswith("VIOLIN:"):
+            vo_violin_refs += 1
+        else:
+            unresolved.append((key, same_as))
+    return {
+        "row_targets_ok": row_targets_ok,
+        "row_targets_not_confirmed_new": row_targets_not_confirmed_new,
+        "vo_violin_refs": vo_violin_refs,
+        "unresolved": unresolved,
+    }
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build Task 5 VIOLIN loading files from Rooney-reviewed candidates.")
     parser.add_argument("--input-xlsx", default="outputs/new_brucella_vaccines_rooney_reviewed.xlsx")
     parser.add_argument("--reference-csv", default="violin-data/t_reference.csv")
     parser.add_argument("--vaccine-csv", default="violin-data/t_vaccine.csv")
     parser.add_argument("--host-csv", default="violin-data/t_host.csv")
+    parser.add_argument("--task6-csv", default=None, help="outputs/task6_new_vaccine_review_full.csv to restrict output to Confirmed New rows")
+    parser.add_argument("--dry-run", action="store_true", help="Print the Task 6 impact report only; write no files and skip PubMed lookups")
     parser.add_argument("--out-references", default="outputs/task5_new_references.csv")
     parser.add_argument("--out-vaccines", default="outputs/task5_new_vaccines.csv")
     parser.add_argument("--out-summary", default="outputs/task5_summary.md")
@@ -466,8 +553,68 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
+    if args.task6_csv:
+        if args.out_references == "outputs/task5_new_references.csv":
+            args.out_references = "outputs/task6_new_references.csv"
+        if args.out_vaccines == "outputs/task5_new_vaccines.csv":
+            args.out_vaccines = "outputs/task6_new_vaccines.csv"
+        if args.out_summary == "outputs/task5_summary.md":
+            args.out_summary = "outputs/task6_summary.md"
+
     reviewed_rows = load_reviewed_rows(Path(args.input_xlsx))
     reviewed_rows = apply_manual_split_overrides(reviewed_rows, MANUAL_SPLIT_OVERRIDES)
+
+    if args.task6_csv:
+        task6 = load_task6_decisions(Path(args.task6_csv))
+        q3_check = check_q3_dependencies(task6)
+        print("Q3 dependency check (regex r'^ROW:(\\d+)-(\\d+)$'):")
+        print(f"  ROW: references resolving to a Confirmed New row: {q3_check['row_targets_ok']}")
+        print(f"  ROW: references NOT resolving to a Confirmed New row: {len(q3_check['row_targets_not_confirmed_new'])}")
+        for item in q3_check["row_targets_not_confirmed_new"]:
+            print(f"    {item}")
+        print(f"  VO:/VIOLIN: external references (not row-to-row, expected): {q3_check['vo_violin_refs']}")
+        print(f"  Unresolved/unrecognized Q3 Same As values: {len(q3_check['unresolved'])}")
+        for item in q3_check["unresolved"]:
+            print(f"    {item}")
+        print()
+
+        pre_groups = group_rows(reviewed_rows)
+        eligible_rows, filter_stats = apply_task6_filter(reviewed_rows, task6)
+        print(f"Source rows (post manual-split-overrides): {len(reviewed_rows)}")
+        print(f"Task 6 status counts: {filter_stats['status_counts']}")
+        print(f"Eligible (Confirmed New) rows: {filter_stats['eligible']}")
+        print(f"Rows renamed to Task 6 Final Standardized Vaccine Name (non-override rows only): {filter_stats['renamed']}")
+        print()
+
+        post_groups = group_rows(eligible_rows)
+        print(f"Existing (all-760) distinct vaccine groups: {len(pre_groups)}")
+        print(f"Final distinct vaccine groups (Confirmed New only): {len(post_groups)}")
+        zero_support = 0
+        mixed_retained = 0
+        for g in pre_groups:
+            keys = [(clean(r.get("PMID", "")), clean(r.get("Vaccine Row", ""))) for r in g]
+            statuses = {clean(task6[k].get("Final New Vaccine Status", "")) for k in keys}
+            if "Confirmed New" not in statuses:
+                zero_support += 1
+            elif len(statuses) > 1:
+                mixed_retained += 1
+        print(f"Zero-Confirmed-New-support groups removed: {zero_support}")
+        print(f"Mixed groups retained after filtering to Confirmed New rows: {mixed_retained}")
+        print()
+
+        eligible_pmids = sorted({clean(r.get("PMID", "")) for r in eligible_rows if clean(r.get("PMID", ""))})
+        all_source_pmids = sorted({clean(r.get("PMID", "")) for r in reviewed_rows if clean(r.get("PMID", ""))})
+        dropped_pmids = sorted(set(all_source_pmids) - set(eligible_pmids))
+        print(f"Unique PMIDs supporting Confirmed New rows (reference count needed): {len(eligible_pmids)}")
+        print(f"PMIDs dropped entirely (no Confirmed New row, no reference generated): {len(dropped_pmids)}")
+        print()
+
+        if args.dry_run:
+            print("Dry run: no files written, no PubMed lookups performed.")
+            return
+
+        reviewed_rows = eligible_rows
+
     existing_references = load_csv_rows(Path(args.reference_csv))
     existing_vaccines = load_csv_rows(Path(args.vaccine_csv))
     host_rows = load_csv_rows(Path(args.host_csv))
