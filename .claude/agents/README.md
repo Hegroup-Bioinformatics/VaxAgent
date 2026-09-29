@@ -87,7 +87,9 @@ cd /Users/jiezhen/Documents/Ontology/vaccine-agent
 | Path | Description |
 |------|-------------|
 | `abstracts/*.txt` | Abstract files from Task 1 (one per PMID) |
-| `prompts/vaccine-extration_prompt.txt` | System prompt with field definitions and controlled vocabularies |
+| `prompts/task2/abstract-extraction.txt` | Canonical system prompt for one-record abstract extraction |
+| `prompts/vaccine-extration_prompt.txt` | Legacy compatibility copy; do not edit independently |
+| `prompts/vaccine-extration_prompt_jiadong.docx` | Archived full-paper/multi-vaccine prompt; not used by the abstract script |
 | `.env` | API credentials |
 
 ### Output
@@ -113,6 +115,26 @@ If the run is interrupted, re-run the same command. Already-processed files (det
 | Non-Brucella / skipped | 1,038 |
 
 See `vaccine-data-curator.md` for the full Task 2 documentation.
+
+#### Prompt organization
+
+Task 2 has two distinct use cases and must not share one prompt:
+
+1. `prompts/task2/abstract-extraction.txt` is the production prompt. It accepts one PubMed record and emits exactly one labeled field block, matching `scripts/extract_vaccine_data_llm.py` and the 20-column CSV output.
+2. The archived Jiadong prompt is a full-paper/multi-vaccine variant. It allows repeated `===VACCINE===` blocks and therefore cannot be sent to the abstract extractor without a different parser. Keep it for a future full-text workflow; do not use it for the current Task 2 run.
+
+The production prompt uses human-readable controlled vocabulary labels. Ontology IDs and VO/VIOLIN mapping belong to later tasks and should not be mixed into abstract extraction.
+
+#### Offline validation before an API run
+
+The repository snapshot contains `abstracts/pmid_abstract_non_review.csv` but not `.env` credentials or per-PMID `.txt` files. Validate the source dataset first:
+
+```bash
+python scripts/validate_task2_dataset.py \
+  --input-csv abstracts/pmid_abstract_non_review.csv
+```
+
+For a real LLM smoke test, create `.env` and run the extractor against a small copied input set before processing all records. The API run is intentionally separate from the deterministic dataset validation.
 
 ---
 

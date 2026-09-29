@@ -25,7 +25,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 ABSTRACTS_DIR = PROJECT_ROOT / "abstracts"
 OUTPUT_CSV = PROJECT_ROOT / "vaccine-data" / "llm_vaccine_extraction_results.csv"
-PROMPT_FILE = PROJECT_ROOT / "prompts" / "vaccine-extration_prompt.txt"
+PROMPT_FILE = PROJECT_ROOT / "prompts" / "task2" / "abstract-extraction.txt"
 ENV_FILE = PROJECT_ROOT / ".env"
 
 # ---------------------------------------------------------------------------

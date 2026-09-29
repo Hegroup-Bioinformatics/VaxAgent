@@ -111,7 +111,7 @@ cd /path/to/vaccine-agent
 | Path | Role |
 |------|------|
 | `scripts/extract_vaccine_data_llm.py` | **The script to run** |
-| `prompts/vaccine-extration_prompt.txt` | System prompt — defines all 18 output fields, controlled vocabularies, and skip logic |
+| `prompts/task2/abstract-extraction.txt` | Canonical system prompt — defines all 18 output fields, controlled vocabularies, and skip logic |
 | `.env` | API credentials (must be created by the user; never committed) |
 | `abstracts/*.txt` | Input — one file per PMID from Task 1 |
 | `vaccine-data/llm_vaccine_extraction_results.csv` | **Output** — one row per abstract |
@@ -124,6 +124,8 @@ cd /path/to/vaccine-agent
 
 - **`skip_reason` is non-empty** when the LLM flags the abstract as not being a Brucella vaccine study. The row is still written so no record is lost.
 - **`skip_reason` is empty** for successfully extracted records.
+
+The archived `prompts/vaccine-extration_prompt_jiadong.docx` is a full-paper prompt that supports multiple vaccine blocks. It is not compatible with the single-block parser used by Task 2 and must not be used for abstract extraction.
 
 ---
 
