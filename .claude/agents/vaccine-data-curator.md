@@ -130,6 +130,8 @@ The archived `prompts/vaccine-extration_prompt_jiadong.docx` is a full-paper pro
 
 The original Brucella batch workflow uses one collection TXT containing 3,409 records. The current extractor supports that format with `--input-file`; use `--limit 5 --workers 1` for a smoke test before a full run.
 
+Run `scripts/check_task2_extraction_quality.py` after extraction to flag missing fields, non-ASCII standardized names, and pathogen/name mismatches. This script preserves the original LLM CSV and writes only a separate flagged-row CSV.
+
 ---
 
 #### Resume support

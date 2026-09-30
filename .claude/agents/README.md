@@ -161,6 +161,16 @@ python scripts/validate_task2_dataset.py \
 
 For a real LLM smoke test, create `.env` and run the extractor against a small copied input set before processing all records. The API run is intentionally separate from the deterministic dataset validation.
 
+After an LLM run, check the extracted fields without rewriting the original output:
+
+```bash
+python scripts/check_task2_extraction_quality.py \
+  --input-csv vaccine-data/llm_vaccine_extraction_results.csv \
+  --flagged-csv vaccine-data/task2_quality_flags.csv
+```
+
+The quality check flags missing fields, non-ASCII standardized names, and mismatches between the reported `Pathogen` and `Standardized Vaccine Name`. Flagged rows require human review.
+
 ---
 
 ## Quick Start: Task 3 (VO + VIOLIN Availability Check)
