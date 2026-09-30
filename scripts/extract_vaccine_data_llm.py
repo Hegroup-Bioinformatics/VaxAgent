@@ -232,7 +232,7 @@ def main(
     api_base = os.environ.get("OPENAI_API_BASE")
     azure_endpoint = os.environ.get("ENDPOINT")
     azure_api_version = os.environ.get("API_VERSION")
-    model = os.environ.get("MODEL") or os.environ.get("DEPLOYMENT", "gpt-5")
+    model = os.environ.get("MODEL") or os.environ.get("DEPLOYMENT", "gpt-4o-mini")
 
     if not api_key:
         print("ERROR: OPENAI_API_KEY or API_KEY must be set in .env", file=sys.stderr)

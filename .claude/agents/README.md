@@ -60,7 +60,7 @@ Extracts structured Brucella vaccine fields from the downloaded abstracts using 
    ```
    OPENAI_API_KEY=<your-key-here>
    OPENAI_API_BASE=https://api.toolkit.umgpt.umich.edu/v1
-  MODEL=gpt-5
+  MODEL=gpt-4o-mini
    ```
 
    > **Note**: The `.env` file is listed in `.gitignore` and will never be committed.
