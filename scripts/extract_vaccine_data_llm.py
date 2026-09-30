@@ -124,6 +124,40 @@ def parse_llm_response(response_text: str) -> dict[str, str]:
     if current_label is not None:
         result[current_label] = " ".join(current_value_lines).strip()
 
+    result = normalize_extraction_result(result)
+    return result
+
+
+def normalize_extraction_result(result: dict[str, str]) -> dict[str, str]:
+    """Apply deterministic, evidence-preserving normalization after parsing."""
+    standardized = result.get("Standardized Vaccine Name", "")
+    pathogen = result.get("Pathogen", "")
+
+    if standardized:
+        standardized = standardized.replace("Δ", "delta").replace("δ", "delta")
+
+        pathogen_match = re.fullmatch(
+            r"\s*(Brucella(?:\s+[A-Za-z]+)?)\s*\*?\s*",
+            pathogen,
+            re.IGNORECASE,
+        )
+        species_match = re.fullmatch(
+            r"\s*(Brucella\s+[A-Za-z]+)\s*.*",
+            pathogen,
+            re.IGNORECASE,
+        )
+        if pathogen_match and species_match:
+            canonical_pathogen = species_match.group(1)
+            standardized = re.sub(
+                r"\bBrucella\s+[A-Za-z]+\b",
+                canonical_pathogen,
+                standardized,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+
+        result["Standardized Vaccine Name"] = standardized
+
     return result
 
 
