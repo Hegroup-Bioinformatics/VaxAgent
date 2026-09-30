@@ -65,13 +65,25 @@ Extracts structured Brucella vaccine fields from the downloaded abstracts using 
 
    > **Note**: The `.env` file is listed in `.gitignore` and will never be committed.
 
+  The legacy UMGPT Azure workflow uses these equivalent variables instead:
+
+  ```
+  API_KEY=<your-key-here>
+  ENDPOINT=https://api.umgpt.umich.edu/azure-openai-api
+  DEPLOYMENT=<deployment-name>
+  API_VERSION=<api-version>
+  ORGANIZATION=009016
+  ```
+
+  Do not mix an Azure deployment key with the OpenAI-compatible `/v1` endpoint. The extractor selects the Azure client when the legacy variables are present.
+
 2. **Dependencies** — Install into the project virtual environment (one-time):
 
    ```bash
    .venv/bin/pip install openai python-dotenv
    ```
 
-3. **Abstracts** — Run Task 1 first so that `abstracts/` is populated with `.txt` files.
+3. **Abstracts** — Use the existing Task 1 collection TXT, or provide standalone `.txt` files.
 
 ### Run the Extraction
 
@@ -80,13 +92,26 @@ cd /Users/jiezhen/Documents/Ontology/vaccine-agent
 .venv/bin/python scripts/extract_vaccine_data_llm.py --workers 6
 ```
 
+For the existing Brucella collection, use the legacy collection TXT and test with a small limit first:
+
+```bash
+python scripts/extract_vaccine_data_llm.py \
+  --input-file "PATH/TO/abstract-BrucellaOR-set_non_review.txt" \
+  --output-csv vaccine-data/collection_smoke_test.csv \
+  --limit 5 \
+  --workers 1
+```
+
+The collection file is split using its existing triple-newline separators. The full collection contains 3,409 records.
+
 - `--workers` (default `6`): number of parallel API threads. Increase for faster throughput if your API quota allows; reduce if you hit rate limits.
 
 ### Inputs
 
 | Path | Description |
 |------|-------------|
-| `abstracts/*.txt` | Abstract files from Task 1 (one per PMID) |
+| `abstracts/*.txt` | Optional standalone abstract files |
+| `--input-file` | Existing collection TXT; one record per PMID, separated by blank lines |
 | `prompts/task2/abstract-extraction.txt` | Canonical system prompt for one-record abstract extraction |
 | `prompts/vaccine-extration_prompt.txt` | Legacy compatibility copy; do not edit independently |
 | `prompts/vaccine-extration_prompt_jiadong.docx` | Archived full-paper/multi-vaccine prompt; not used by the abstract script |
@@ -123,7 +148,7 @@ Task 2 has two distinct use cases and must not share one prompt:
 1. `prompts/task2/abstract-extraction.txt` is the production prompt. It accepts one PubMed record and emits exactly one labeled field block, matching `scripts/extract_vaccine_data_llm.py` and the 20-column CSV output.
 2. The archived Jiadong prompt is a full-paper/multi-vaccine variant. It allows repeated `===VACCINE===` blocks and therefore cannot be sent to the abstract extractor without a different parser. Keep it for a future full-text workflow; do not use it for the current Task 2 run.
 
-The production prompt uses human-readable controlled vocabulary labels. Ontology IDs and VO/VIOLIN mapping belong to later tasks and should not be mixed into abstract extraction.
+The production prompt uses human-readable controlled vocabulary labels. Ontology IDs and VO/VIOLIN mapping belong to later tasks and should not be mixed into abstract extraction. The input format is independent from prompt organization: the legacy collection TXT remains a supported Task 2 input.
 
 #### Offline validation before an API run
 

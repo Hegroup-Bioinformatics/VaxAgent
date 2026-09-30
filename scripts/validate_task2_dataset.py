@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 import sys
 from pathlib import Path
 
@@ -71,14 +72,21 @@ def compare_results(input_pmids: list[str], result_path: Path) -> None:
         )
 
     input_set = {pmid for pmid in input_pmids if pmid}
-    result_pmids = [row.get("PMID", "").strip() for row in results]
+    result_pmids = []
+    for row in results:
+        pmid = row.get("PMID", "").strip()
+        if not pmid:
+            source_file = row.get("source_file", "").strip()
+            match = re.fullmatch(r"(\d+)\.txt", source_file)
+            pmid = match.group(1) if match else ""
+        result_pmids.append(pmid)
     result_set = {pmid for pmid in result_pmids if pmid}
     missing = sorted(input_set - result_set)
     unexpected = sorted(result_set - input_set)
     duplicate_results = sorted(
         {pmid for pmid in result_pmids if pmid and result_pmids.count(pmid) > 1}
     )
-    malformed = sum(not row.get("PMID", "").strip() for row in results)
+    malformed = sum(not pmid for pmid in result_pmids)
 
     print(f"Result rows: {len(results)}")
     print(f"Result unique PMIDs: {len(result_set)}")

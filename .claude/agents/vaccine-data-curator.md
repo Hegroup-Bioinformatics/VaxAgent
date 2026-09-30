@@ -113,7 +113,8 @@ cd /path/to/vaccine-agent
 | `scripts/extract_vaccine_data_llm.py` | **The script to run** |
 | `prompts/task2/abstract-extraction.txt` | Canonical system prompt — defines all 18 output fields, controlled vocabularies, and skip logic |
 | `.env` | API credentials (must be created by the user; never committed) |
-| `abstracts/*.txt` | Input — one file per PMID from Task 1 |
+| `abstracts/*.txt` | Optional input — one standalone file per PMID |
+| `--input-file` | Legacy collection TXT; records are separated by blank lines |
 | `vaccine-data/llm_vaccine_extraction_results.csv` | **Output** — one row per abstract |
 
 ---
@@ -126,6 +127,8 @@ cd /path/to/vaccine-agent
 - **`skip_reason` is empty** for successfully extracted records.
 
 The archived `prompts/vaccine-extration_prompt_jiadong.docx` is a full-paper prompt that supports multiple vaccine blocks. It is not compatible with the single-block parser used by Task 2 and must not be used for abstract extraction.
+
+The original Brucella batch workflow uses one collection TXT containing 3,409 records. The current extractor supports that format with `--input-file`; use `--limit 5 --workers 1` for a smoke test before a full run.
 
 ---
 
