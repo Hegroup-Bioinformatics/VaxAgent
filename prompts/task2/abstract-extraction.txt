@@ -65,7 +65,7 @@ If a Brucella species is stated but is not listed above, preserve it and append 
 FIELD RULES
 - Extracted Vaccine Name is copied exactly from the paper. Never construct a name in this field.
 - Proposed Vaccine Name repeats the extracted name when available. If absent, use the most specific evidence-supported combination of pathogen, antigen/component, and vaccine type; do not invent a strain or antigen.
-- Standardized Vaccine Name normalizes the evidence-supported name. Expand abbreviations such as B. abortus to Brucella abortus. Normalize S19/B19 to strain 19 in Brucella abortus context; S2 to strain 2 in Brucella suis context; RB-51 to RB51; Rev1/Rev 1/Rev-1 to Rev. 1. Prefer the form Brucella species strain X vaccine. Use plain ASCII where possible. Do not add details absent from the abstract.
+- Standardized Vaccine Name normalizes the evidence-supported name. Expand abbreviations such as B. abortus to Brucella abortus. Normalize S19/B19 to strain 19 in Brucella abortus context; S2 to strain 2 in Brucella suis context; RB-51 to RB51; Rev1/Rev 1/Rev-1 to Rev. 1. Prefer the form Brucella species strain X vaccine. Use plain ASCII: replace the Greek delta symbol (Δ/δ) with the word delta. The pathogen species in Standardized Vaccine Name MUST agree with the Pathogen field; never substitute a different Brucella species based on outside knowledge or a similar vaccine name. Do not add details absent from the abstract.
 - Combination Vaccine is yes only when antigens from two or more distinct infectious agents or diseases are explicitly described; otherwise no.
 - Vaccine Type must use only the controlled labels above, not ontology IDs.
 - Adjuvant is no only when the abstract explicitly states no adjuvant; use yes; <name> when named; otherwise Not reported.
@@ -74,5 +74,7 @@ FIELD RULES
 
 QUALITY CHECK BEFORE RESPONDING
 - Confirm the record is a Brucella vaccine study or return SKIP.
+- Confirm the species in Standardized Vaccine Name matches Pathogen exactly when both are reported.
+- Confirm Standardized Vaccine Name contains no Greek letters or other non-ASCII symbols.
 - Confirm every required label appears exactly once.
 - Confirm no markdown or extra commentary is present.
