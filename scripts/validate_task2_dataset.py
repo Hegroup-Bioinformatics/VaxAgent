@@ -87,6 +87,16 @@ def compare_results(input_pmids: list[str], result_path: Path) -> None:
         {pmid for pmid in result_pmids if pmid and result_pmids.count(pmid) > 1}
     )
     malformed = sum(not pmid for pmid in result_pmids)
+    quality_issues: list[tuple[str, str]] = []
+    for row, pmid in zip(results, result_pmids):
+        standardized = row.get("Standardized Vaccine Name", "").strip()
+        pathogen = row.get("Pathogen", "").strip()
+        if standardized and any(ord(char) > 127 for char in standardized):
+            quality_issues.append((pmid, "standardized name contains non-ASCII characters"))
+        if pathogen and pathogen.lower() != "not reported":
+            pathogen_species = re.search(r"Brucella\s+[A-Za-z]+", pathogen, re.IGNORECASE)
+            if pathogen_species and pathogen_species.group(0).lower() not in standardized.lower():
+                quality_issues.append((pmid, "Pathogen species is absent from Standardized Vaccine Name"))
 
     print(f"Result rows: {len(results)}")
     print(f"Result unique PMIDs: {len(result_set)}")
@@ -94,6 +104,7 @@ def compare_results(input_pmids: list[str], result_path: Path) -> None:
     print(f"Unexpected result PMIDs: {len(unexpected)}")
     print(f"Duplicate result PMIDs: {len(duplicate_results)}")
     print(f"Result rows with missing PMID: {malformed}")
+    print(f"Quality issues: {len(quality_issues)}")
 
     if missing:
         print("Missing PMID examples: " + ", ".join(missing[:10]))
@@ -101,6 +112,8 @@ def compare_results(input_pmids: list[str], result_path: Path) -> None:
         print("Unexpected PMID examples: " + ", ".join(unexpected[:10]))
     if duplicate_results:
         print("Duplicate result examples: " + ", ".join(duplicate_results[:10]))
+    for pmid, issue in quality_issues[:20]:
+        print(f"Quality issue [{pmid}]: {issue}")
 
 
 def parse_args() -> argparse.Namespace:
