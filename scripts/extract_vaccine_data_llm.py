@@ -136,17 +136,17 @@ def normalize_extraction_result(result: dict[str, str]) -> dict[str, str]:
     if standardized:
         standardized = standardized.replace("Δ", "delta").replace("δ", "delta")
 
-        pathogen_match = re.fullmatch(
-            r"\s*(Brucella(?:\s+[A-Za-z]+)?)\s*\*?\s*",
+        species_match = re.search(
+            r"\b(Brucella\s+[A-Za-z]+)\b",
             pathogen,
             re.IGNORECASE,
         )
-        species_match = re.fullmatch(
-            r"\s*(Brucella\s+[A-Za-z]+)\s*.*",
-            pathogen,
+        standardized_has_brucella = re.search(
+            r"\bBrucella\s+[A-Za-z]+\b",
+            standardized,
             re.IGNORECASE,
         )
-        if pathogen_match and species_match:
+        if species_match and standardized_has_brucella:
             canonical_pathogen = species_match.group(1)
             standardized = re.sub(
                 r"\bBrucella\s+[A-Za-z]+\b",
@@ -216,6 +216,9 @@ def process_abstract(
 
     parsed = parse_llm_response(reply)
     parsed["source_file"] = source_file
+    source_match = re.fullmatch(r"(\d+)\.txt", source_file)
+    if source_match:
+        parsed["PMID"] = source_match.group(1)
     return parsed
 
 
