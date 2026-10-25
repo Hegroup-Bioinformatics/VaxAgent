@@ -1,0 +1,12 @@
+Update the Excel workbook Step4.2_new_vaccines_VO_only.xlsx as follows:
+
+1. Add a new column named "Definition source" immediately after the "PMID" column.
+2. For each row in Step4.2, set the value of "Definition source" to the row's own PMID with the prefix "PMID:", for example: "PMID:101226".
+3. Then check Step4.1_new_vaccines_VO.xlsx. In that workbook, look at the "Duplicate record" column. If a value such as "5" appears, find the matching row(s) in Step4.2 by matching the Step4.2 "Vaccine Num" column to that duplicate value.
+4. For each matching duplicate-group record in Step4.1, collect the PMIDs from the Step4.1 "PMID" column and append them to the Step4.2 "Definition source" value. Each appended PMID must also be prefixed with "PMID:" and all values must be separated by a pipe character "|".
+5. Keep the original Step4.2 PMID first, then append the duplicate-group PMIDs in order, while avoiding duplicate PMID entries.
+6. Add a new column named "vaccine role" immediately after the "Vaccine Type (reviewed)" column.
+7. For the "vaccine role" column, take the value from "Vaccine Type (reviewed)" and append " role" to each item, splitting on the pipe character "|" when multiple vaccine types exist. Example:
+   - "live attenuated vaccine | recombinant vector vaccine"
+   - becomes "live attenuated vaccine role | recombinant vector vaccine role"
+8. Keep every other row and column unchanged. Preserve the original workbook structure and write the updated data back to the same Step4.2 Excel file.
