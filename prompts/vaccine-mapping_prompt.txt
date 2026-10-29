@@ -1,4 +1,4 @@
-Map extracted vaccine records in `vaccine-data/brucella_vaccine_llm_extraction_results.csv` to matching entries in VIOLIN and the Vaccine Ontology (VO).
+Map extracted vaccine records in `vaccine-data/llm_vaccine_extraction_results.csv` to matching entries in VIOLIN and the Vaccine Ontology (VO).
 
 Goal:
 - Determine whether each extracted vaccine already exists in VIOLIN.

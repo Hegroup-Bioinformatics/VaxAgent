@@ -1,5 +1,5 @@
 # Vaccine Data Extraction Prompt
-# Used by: scripts/extract_vaccine_data_from_abstracts.py
+# Used by: scripts/extract_vaccine_data_llm.py
 # Purpose: Extract structured Brucella vaccine fields from PubMed abstracts
 
 # ---------------------------------------------------------------------------

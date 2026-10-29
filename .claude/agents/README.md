@@ -5,13 +5,12 @@ This directory stores reusable agent prompts for this repository.
 ## Available Agent
 - `vaccine-data-curator.md`: end-to-end PubMed abstract extraction workflow that writes review-ready CSV outputs for VIOLIN loading.
 
-## Quick Start: Task 1 (PubMed Download with Custom Keywords)
+## Step 1: Download PubMed Abstracts (Task 1)
 
 To download non-review abstracts for any vaccine or disease topic:
 
 ```bash
-cd /Users/jiezhen/Documents/Ontology/vaccine-agent
-.venv/bin/python scripts/pubmed_download_non_review.py \
+python scripts/pubmed_download_non_review.py \
   --query "YOUR_KEYWORDS" \
   --out-dir abstracts
 ```
@@ -30,17 +29,17 @@ cd /Users/jiezhen/Documents/Ontology/vaccine-agent
 **Examples**:
 ```bash
 # Search for influenza vaccine studies
-.venv/bin/python scripts/pubmed_download_non_review.py \
+python scripts/pubmed_download_non_review.py \
   --query "influenza vaccine" \
   --out-dir abstracts
 
 # Search for COVID-19 vaccine literature
-.venv/bin/python scripts/pubmed_download_non_review.py \
+python scripts/pubmed_download_non_review.py \
   --query "(COVID-19 OR SARS-CoV-2) AND vaccine" \
   --out-dir abstracts
 
 # Search for malaria vaccine candidates
-.venv/bin/python scripts/pubmed_download_non_review.py \
+python scripts/pubmed_download_non_review.py \
   --query "malaria vaccine" \
   --out-dir abstracts
 ```
@@ -49,7 +48,7 @@ See `vaccine-data-curator.md` for the full Task 1 documentation and workflow.
 
 ---
 
-## Quick Start: Task 2 (LLM-Based Vaccine Data Extraction)
+## Step 2: Extract Vaccine Data (Task 2)
 
 Extracts structured Brucella vaccine fields from the downloaded abstracts using the UMICH GPT Toolkit API.
 
@@ -76,8 +75,7 @@ Extracts structured Brucella vaccine fields from the downloaded abstracts using 
 ### Run the Extraction
 
 ```bash
-cd /Users/jiezhen/Documents/Ontology/vaccine-agent
-.venv/bin/python scripts/extract_vaccine_data_llm.py --workers 6
+python scripts/extract_vaccine_data_llm.py --workers 6
 ```
 
 - `--workers` (default `6`): number of parallel API threads. Increase for faster throughput if your API quota allows; reduce if you hit rate limits.
@@ -87,7 +85,7 @@ cd /Users/jiezhen/Documents/Ontology/vaccine-agent
 | Path | Description |
 |------|-------------|
 | `abstracts/*.txt` | Abstract files from Task 1 (one per PMID) |
-| `prompts/vaccine-extration_prompt.txt` | System prompt with field definitions and controlled vocabularies |
+| `prompts/vaccine-extraction_prompt.txt` | System prompt with field definitions and controlled vocabularies |
 | `.env` | API credentials |
 
 ### Output
@@ -114,6 +112,12 @@ If the run is interrupted, re-run the same command. Already-processed files (det
 
 See `vaccine-data-curator.md` for the full Task 2 documentation.
 
+The separate `scripts/extract_vaccine_data_from_abstracts.py` script is a rule-based extractor with a different output; it is not part of this LLM workflow.
+
+## Prompt Organization
+
+Keep prompts task-specific. The abstract extractor, VIOLIN/VO mapper, candidate reviewer, and validation scripts have different input evidence and output formats, so combining their prompts would make their contracts ambiguous. The archived Jiadong full-paper prompt is a separate workflow and is not used by the abstract extractor.
+
 ---
 
 ## Quick Start: Task 3 (VO + VIOLIN Availability Check)
@@ -125,8 +129,7 @@ Checks extracted vaccine names against the local VIOLIN vaccine table and VO evi
 This step enriches `t_vaccine.csv` with resolved pathogen names, host species names, and PMIDs extracted from reference IDs in `c_description`.
 
 ```bash
-cd /Users/jiezhen/Documents/Ontology/vaccine-agent
-.venv/bin/python scripts/enrich_violin_vaccine_table.py
+python scripts/enrich_violin_vaccine_table.py
 ```
 
 **Step 1 output**:
@@ -135,8 +138,7 @@ cd /Users/jiezhen/Documents/Ontology/vaccine-agent
 ### Step 2: Run Task 3 Availability Check
 
 ```bash
-cd /Users/jiezhen/Documents/Ontology/vaccine-agent
-.venv/bin/python scripts/check_vaccine_availability_vo_violin.py \
+python scripts/check_vaccine_availability_vo_violin.py \
   --violin-vaccine-csv inputs/t_vaccine_enriched.csv
 ```
 
@@ -166,9 +168,8 @@ cd /Users/jiezhen/Documents/Ontology/vaccine-agent
 Run full mapping with PMID-first VIOLIN and VO rules:
 
 ```bash
-cd /Users/jiezhen/Documents/Ontology/vaccine-agent
-.venv/bin/python scripts/map_vaccines_to_violin_vo.py \
-  --input-csv vaccine-data/brucella_vaccine_llm_extraction_results.csv \
+python scripts/map_vaccines_to_violin_vo.py \
+  --input-csv vaccine-data/llm_vaccine_extraction_results.csv \
   --violin-csv inputs/t_vaccine_enriched.csv \
   --vo-template-csv inputs/vaccine.csv \
   --out-csv outputs/brucella_vaccine_mapping.csv

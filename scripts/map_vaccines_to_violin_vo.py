@@ -260,7 +260,7 @@ def write_csv(path: Path, rows: list[dict[str, str]], fieldnames: list[str]) -> 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Map extracted vaccine records to VIOLIN and VO template.")
-    parser.add_argument("--input-csv", default="vaccine-data/brucella_vaccine_llm_extraction_results.csv")
+    parser.add_argument("--input-csv", default="vaccine-data/llm_vaccine_extraction_results.csv")
     parser.add_argument("--violin-csv", default="inputs/t_vaccine_enriched.csv")
     parser.add_argument("--vo-template-csv", default="inputs/vaccine.csv")
     parser.add_argument("--limit", type=int, default=0, help="Only process first N rows (0 = all).")

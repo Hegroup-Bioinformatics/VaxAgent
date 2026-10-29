@@ -537,7 +537,7 @@ def check_q3_dependencies(task6: dict[tuple[str, str], dict[str, str]]) -> dict[
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build Task 5 VIOLIN loading files from Rooney-reviewed candidates.")
-    parser.add_argument("--input-xlsx", default="outputs/new_brucella_vaccines_rooney_reviewed.xlsx")
+    parser.add_argument("--input-xlsx", default="outputs/new_brucella_vaccines_reviewed.xlsx")
     parser.add_argument("--reference-csv", default="violin-data/t_reference.csv")
     parser.add_argument("--vaccine-csv", default="violin-data/t_vaccine.csv")
     parser.add_argument("--host-csv", default="violin-data/t_host.csv")

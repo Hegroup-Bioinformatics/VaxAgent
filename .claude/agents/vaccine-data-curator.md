@@ -111,7 +111,7 @@ cd /path/to/vaccine-agent
 | Path | Role |
 |------|------|
 | `scripts/extract_vaccine_data_llm.py` | **The script to run** |
-| `prompts/vaccine-extration_prompt.txt` | System prompt — defines all 18 output fields, controlled vocabularies, and skip logic |
+| `prompts/vaccine-extraction_prompt.txt` | System prompt — defines all 18 output fields, controlled vocabularies, and skip logic |
 | `.env` | API credentials (must be created by the user; never committed) |
 | `abstracts/*.txt` | Input — one file per PMID from Task 1 |
 | `vaccine-data/llm_vaccine_extraction_results.csv` | **Output** — one row per abstract |
@@ -182,7 +182,7 @@ Task 3 output files:
 
 ```bash
 .venv/bin/python scripts/map_vaccines_to_violin_vo.py \
-  --input-csv vaccine-data/brucella_vaccine_llm_extraction_results.csv \
+  --input-csv vaccine-data/llm_vaccine_extraction_results.csv \
   --violin-csv inputs/t_vaccine_enriched.csv \
   --vo-template-csv inputs/vaccine.csv \
   --out-csv outputs/brucella_vaccine_mapping.csv
