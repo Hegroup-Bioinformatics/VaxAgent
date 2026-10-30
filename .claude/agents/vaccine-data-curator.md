@@ -26,7 +26,7 @@ Researches vaccine literature from PubMed, extracts structured vaccine evidence,
 
 ## Operating Instructions
 
-### Task 1: PubMed Download (Script: `scripts/pubmed_download_non_review.py`)
+### Step 1: Literature Retrieval (Script: `scripts/pubmed_download_non_review.py`)
 
 > See README.md Quick Start for a condensed version.
 **Purpose**: Search PubMed, filter to non-review articles, and download abstracts.
@@ -63,7 +63,7 @@ Researches vaccine literature from PubMed, extracts structured vaccine evidence,
 
 ---
 
-### Task 2: LLM-Based Vaccine Data Extraction (Script: `scripts/extract_vaccine_data_llm.py`)
+### Step 2: LLM-Based Classification, Metadata Extraction, and Entity Normalization (Script: `scripts/extract_vaccine_data_llm.py`)
 
 **Purpose**: Read every abstract `.txt` file from `abstracts/`, send each one to the UMICH GPT Toolkit API with the Brucella vaccine extraction prompt, and save structured results to a single CSV.
 
@@ -143,15 +143,17 @@ The script writes results incrementally and tracks which files have been process
 
 ---
 
-### Task 3–4: Review & VIOLIN Matching (After Task 2 completes)
+### Step 3: Iterative Expert Review and Validation
 
-**Task 3 Step 1 (required): Enrich VIOLIN vaccine table**
+**Step 3.1 Validate study of Brucella Vaccines and Potential New Candidates**
+
+*1. Enrich VIOLIN vaccine table*
 
 ```bash
 .venv/bin/python scripts/enrich_violin_vaccine_table.py
 ```
 
-Step 1 output:
+- output:
 - `inputs/t_vaccine_enriched.csv`
 
 This enrichment resolves:
@@ -159,7 +161,12 @@ This enrichment resolves:
 - Host IDs in `c_host_species` and `c_host_species2` to host names using `violin-data/t_host.csv`
 - Reference IDs in `c_description` (for example `[Ref187: ...]`) to PMIDs using `violin-data/t_reference.csv`
 
-**Task 3 Step 2: Availability check command**
+*2. Validate Vaccine Availability in VIOLIN and SuggestPotential New Candidates*
+
+**Reusable Prompt**:
+
+The reusable prompt should guide the Agent to normalize entity names, and validate vaccine availability in VIOLIN. 
+See `prompts/vaccine-mapping_prompt.txt` for the reusable prompt content.
 
 ```bash
 .venv/bin/python scripts/check_vaccine_availability_vo_violin.py \
@@ -171,40 +178,45 @@ What this does:
 2. Checks vaccine-name availability against `violin-data/t_vaccine.csv`.
 3. Uses local VO evidence from `inputs/vaccine.csv` (ROBOT template format) for VO-related review.
 4. Splits candidate names into found vs missing in VIOLIN.
-5. Saves Task 3 outputs under `outputs/`.
+5. Saves Step 3 outputs under `outputs/`.
 
-Task 3 output files:
-- `outputs/task3_vaccine_availability.csv` (detailed availability table)
-- `outputs/new_vaccine_candidates.csv` (name-level VIOLIN misses)
-- `outputs/task3_availability_summary.md` (summary counts and review highlights)
+- input files:
+- `inputs/t_vaccine_enriched.csv`
+- `inputs/vaccine_Brucella.csv`
+- `Step2_extraction_brucella_all_abstract_field_extraction_results.csv`
 
-**Task 4: Final mapping command**
+- output file:
+- `outputs/Step3.1_Brucella_vaccine_validation_gpt4o_mini.xlsx` (Validated mapping results of Brucella vaccine candidates in VIOLIN)
 
-```bash
-.venv/bin/python scripts/map_vaccines_to_violin_vo.py \
-  --input-csv vaccine-data/llm_vaccine_extraction_results.csv \
-  --violin-csv inputs/t_vaccine_enriched.csv \
-  --vo-template-csv inputs/vaccine.csv \
-  --out-csv outputs/brucella_vaccine_mapping.csv
-```
+*3. Manual Review of Brucella Vaccine Candidates*
 
-Task 4 mapping notes:
-- VIOLIN mapping is PMID-first, then vaccine-name discrimination.
-- VO mapping is PMID-first using PMIDs from VO `definition source` in `inputs/vaccine.csv`.
-- VO candidate filtering is Brucella-only; non-Brucella extraction rows return VO `not mapped`.
-- Preserve VO ID format from the ROBOT template (for example `VO:0000021`).
+Manual review should focus on cases where the automated validation is uncertain or where new vaccine candidates are suggested. The reviewer should verify the correctness of mappings and the validity of suggested new candidates. The review process should document any discrepancies or uncertainties for further investigation.
 
-Task 4 output file:
-- `outputs/brucella_vaccine_mapping.csv` (canonical full-dataset mapping file)
+- output file for manual review:
+- `outputs/Step3.1_brucella_vaccines_reviewed.xlsx` 
 
-## Quality Rules
-- Do not invent PMID, DOI, vaccine names, or efficacy claims.
-- Keep one row per vaccine-study mention unless deduplication is explicit.
-- Preserve original text snippets used for extracted claims.
-- Flag uncertain mappings rather than forcing assignments.
+**Step 3.2 Validate New Brucella Vaccine Candidates**
 
-## Completion Checklist
-- All required output files exist.
-- `new_vaccine_candidates.csv` includes only items absent from `t_vaccine.csv`.
-- Every extracted row has a PMID.
-- Review memo includes unresolved/ambiguous rows.
+**Reusable Prompt**:
+The reusable prompt should guide the Agent to validate whether the article is studied Brucella vaccines and also to identify new vaccine candidates not present in VIOLIN.
+See `prompts/vaccine-new-candidates-review_prompt.txt` for the reusable prompt content.
+
+- input file:
+- `inputs/Step3.1_Brucella_vaccines_reviewed.xlsx`
+
+- output file:
+- `outputs/Step3.2_new_Brucella_vaccines_validation_claude.xlsx`
+
+**Manual Review of Brucella Vaccine Candidates**
+
+Manual review should focus on following fields:
+- Vaccine Name
+- Pathogen
+- Target Vaccine Recipient or Host
+- Lab Model or Cell
+- Vaccine Type
+- Vaccine Development Stage
+- Gene or Protein Antigen
+- Combination Vaccine
+
+**Step 4: Convert Brucella Vaccine Data to VO vaccine template**
