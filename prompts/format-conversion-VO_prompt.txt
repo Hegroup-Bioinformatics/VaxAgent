@@ -1,0 +1,70 @@
+# TASK OVERVIEW
+Convert data from `outputs/Step3.2_new_Brucella_vaccines_reviewed.xlsx` (File 1) to match the template structure of `Inputs/vaccine_Brucella.csv` (File 2), and save the final output to `outputs/Step4.1_new_Brucella_vaccines_VO.xlsx`.
+
+--------------------------------------------------------------------------------
+# DATA SELECTION & PREPARATION
+1. Filter rows in File 1 to retrieve ONLY records where column 'Vaccine Num' is NOT blank/null.
+2. Sort the filtered dataset in ascending order by column 'Vaccine Num'.
+3. Global Replacement Rules:
+   - Convert all multi-value separators from semicolon (';') in File 1 to pipe ('|') in File 2.
+   - Replace any occurrence of 'Not report' (case-insensitive) with an empty string ('').
+
+--------------------------------------------------------------------------------
+# OUTPUT STRUCTURE & COLUMN MAPPING RULES
+Retain the exact first row (header row) of File 2. Populate each target column in File 2 using data from File 1 based on the logic below:
+
+- LABEL:
+  Directly copy from File 1 column 'Vaccine Name (final)'.
+
+- VIOLIN label:
+  Directly copy from File 1 column 'Vaccine Name in VIOLIN'.
+
+- alternative label:
+  If value in File 1 column 'Vaccine Name (final)' is DIFFERENT from column 'Vaccine Name in VIOLIN', populate with value from 'Vaccine Name in VIOLIN'. Otherwise, leave blank.
+
+- vaccine type:
+  1. For each value in File 1 column 'Vaccine Type (reviewed)', append 'role' (e.g., 'DNA vaccine' -> 'DNA vaccine role'). Separate multiple entries using '|'.
+  2. If File 1 column 'Combination Vaccine' equals 'Yes', append 'combination vaccine role' to this cell, separated by '|'.
+
+- definition:
+  Directly copy from File 1 column 'Vaccine Introduction'.
+
+- definition source:
+  1. Format File 1 column 'PMID' values by prefixing with 'PMID:' (e.g., '101226' -> 'PMID:101226'). Separate multiple PMIDs using '|'.
+  2. Search File 1 for any rows sharing the same 'Vaccine Num' where column 'Duplicate record' is populated; aggregate, deduplicate, and append their formatted PMID values ('PMID:<value>') to this cell using '|'.
+
+- immunizes against pathogen:
+  Directly copy from File 1 column 'Pathogen (reviewed)'.
+
+- immunizes recipient:
+  Directly copy from File 1 column 'Target Vaccine Recipient or Host (reviewed)'.
+
+- lab animal:
+  Extract only the animal scientific name from File 1 column 'Lab Model or Cell (reviewed)'.
+
+- status of vaccine development:
+  Directly copy from File 1 column 'Vaccine Development Stage (reviewed)'.
+
+- term editor:
+  Set static value: 'VaxAgent | Jie Zheng'
+
+- inSubset:
+  Set static value: 'vaccine'
+
+- Category:
+  Set static value: 'VIOLIN'
+
+- immunizes against disease:
+  Act as a vaccinology domain expert: evaluate the pathogen information from File 1 column 'Pathogen (reviewed)' and populate the corresponding disease caused by the pathogen (e.g., 'Brucella abortus' -> 'Brucellosis').
+
+- Parent (name):
+  Construct parent term using File 1 columns 'Pathogen (reviewed)', 'Vaccine Type (reviewed)', and 'Combination Vaccine' following these hierarchy rules:
+  1. Pathogen Selection: If 'Pathogen (reviewed)' contains multiple values starting with 'Brucella', select the primary 'Brucella' pathogen. If non-Brucella pathogens are present alongside a Brucella species, select the Brucella species.
+  2. Combination Override: If 'Combination Vaccine' equals 'Yes', set value to 'combination vaccine'.
+  3. Vaccine Type Selection: If 'Vaccine Type (reviewed)' has multiple values, use ONLY the first value.
+  4. Naming Rule:
+     - For types 'live attenuated vaccine', 'live virulent vaccine', or 'inactivated vaccine': Insert Pathogen name before the word 'vaccine' (Format: '[Pathogen] [Vaccine Type Keyword] vaccine'). Example: 'Brucella abortus' + 'live attenuated vaccine' -> 'live attenuated Brucella abortus vaccine'.
+     - For all other vaccine types: Format as '[Pathogen] [Vaccine Type]'. Example: 'Brucella abortus' + 'DNA vaccine' -> 'Brucella abortus DNA vaccine'.
+
+- All Other Columns:
+  Leave blank.

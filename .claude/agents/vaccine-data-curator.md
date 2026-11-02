@@ -225,6 +225,10 @@ Manual review should focus on following fields:
 
 **Purpose**: Convert the reviewed Brucella vaccine dataset into the VO-compliant vaccine template and generate the Step 4.1 workbook for downstream ontology curation.
 
+**Reusable Prompt**:
+The reusable prompt should guide the Agent to convert the extracted new Brucella vaccines data into a VO-compliant format.
+See `prompts/format-conversion-VO.txt` for the reusable prompt content.
+
 **Input**:
 - `outputs/Step3.2_new_Brucella_vaccines_reviewed.xlsx`
 - `inputs/vaccine_Brucella.csv` (template header and target structure)
