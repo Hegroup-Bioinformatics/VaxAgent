@@ -1,0 +1,49 @@
+# Task: Propose Vaccine Ontology (VO) Textual Definitions
+
+## Input File
+- outputs folder: `Step4.1_new_Brucella_vaccines_VO_reviewed.xlsx`
+
+## Objective
+Draft a formal, fluent, and concise textual definition for each vaccine entry using information from the input columns: `[Parent (name)]`, `[Definition]`.
+
+---
+
+## Core Information Requirements
+Ensure the proposed definition incorporates the following key elements where available:
+1. **Vaccine Formulation:** Vaccine antigen and vaccine adjuvant.
+2. **Experimental Context:** The host animal or cell model used to test Vaccine Efficacy or Immune Response.
+
+---
+
+## Instructions for Drafting Definitions
+
+### 1. Opening Sentence Construction
+- **Primary Method:** Begin with the `[Parent (name)]` value, followed immediately by the text under the `'Vaccine Formulation:'` section within the `[Definition]` column.
+- **Fallback Method:** If no `'Vaccine Formulation:'` section exists, start with the specific vaccine name components that distinguish it from its parent vaccine.
+
+### 2. Supporting Content
+- Follow the opening sentence with 1–2 supporting sentences incorporating relevant details from the `'Vaccine Efficacy:'` and `'Immune Response:'` sections of the `[Definition]` column.
+- Multiple sentences are allowed to ensure readability and accuracy.
+
+### 3. Disambiguation & Multi-Vaccine Handling
+- If the `[Definition]` field contains information about multiple vaccines, cross-reference and align with metadata columns (`[Extracted Vaccine Name]`, `[Combination Vaccine]`, `[Pathogen]`, `[Vaccine Type]`, `[Adjuvant]`).
+- If metadata columns match across multiple entries, analyze the remaining descriptive text in `[Definition]` to differentiate the vaccine.
+
+### 4. Style & Constraints
+- **Eliminate Redundancy:** Do not repeat phrases or duplicate information across sentences.
+- **Tone & Clarity:** Polish the definition to sound natural, grammatically correct, fluent, and scientifically precise.
+
+---
+
+## Example Output
+
+**Vaccine Term:**
+`Brucella abortus BLS-L7/L12 subunit vaccine`
+
+**Proposed Definition:**
+> Brucella abortus subunit vaccine using L7/L12 that is made as a recombinant BLS-L7/L12 fusion protein vaccine.
+
+---
+
+## Output Destination
+- outputs folder: `Step4.2_new_Brucella_vaccines_template.xlsx`
