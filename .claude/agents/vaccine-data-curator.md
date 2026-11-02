@@ -219,4 +219,50 @@ Manual review should focus on following fields:
 - Gene or Protein Antigen
 - Combination Vaccine
 
-**Step 4: Convert Brucella Vaccine Data to VO vaccine template**
+### Step 4: Convert Brucella Vaccine Data to VO vaccine template
+
+**Step 4.1: Convert Brucella Vaccine Data to VO vaccine template format**
+
+**Purpose**: Convert the reviewed Brucella vaccine dataset into the VO-compliant vaccine template and generate the Step 4.1 workbook for downstream ontology curation.
+
+**Input**:
+- `outputs/Step3.2_new_Brucella_vaccines_reviewed.xlsx`
+- `inputs/vaccine_Brucella.csv` (template header and target structure)
+- `prompts/vaccine-to-vo_prompt.txt` (mapping and normalization rules)
+
+**Reusable script**:
+- `scripts/convert_step4_1_vaccine_to_vo.py`
+
+**Required generation flow**:
+1. Load the reviewed workbook and keep only rows where `Vaccine Num` is present.
+2. Sort the retained rows by `Vaccine Num` in ascending order.
+3. Exclude any row where `Duplicate record` is populated (non-blank). This ensures only master records are exported to the Step 4.1 workbook.
+4. Use the exact header row from `inputs/vaccine_Brucella.csv` and populate each target column according to the prompt rules.
+5. Apply the global data normalization rules:
+   - replace `;` separators with `|`
+   - replace any case-insensitive `Not report` value with empty string
+   - strip blank and null values
+6. For `definition source`, aggregate the current row's `PMID` plus all PMIDs from rows sharing the same `Vaccine Num` through the duplicate relationship. Example:
+   - if row `Vaccine Num = 5` has own PMID `749327` and duplicates with `PMID` values `16031427` and `16031388`, the `definition source` should be `PMID:749327|PMID:16031427|PMID:16031388`
+7. Add static metadata fields exactly as specified:
+   - `term editor = 'VaxAgent | Jie Zheng'`
+   - `inSubset = 'vaccine'`
+   - `Category = 'VIOLIN'`
+8. Populate `Parent (name)` using the pathogen + vaccine type logic, with the priority rules described in the prompt.
+9. Save the result as:
+   - `outputs/Step4.1_new_Brucella_vaccines_VO.xlsx`
+
+**Run command**:
+```bash
+.venv/bin/python scripts/convert_step4_1_vaccine_to_vo.py
+```
+
+**Expected output**:
+- One Excel workbook containing only valid non-duplicate vaccine records in the VO template format.
+- `definition source` values should include both the master PMID and all duplicate-related PMIDs for that `Vaccine Num`.
+
+**Validation check**:
+- Confirm the exported workbook contains no rows where `Duplicate record` is filled.
+- Confirm selected duplicate groups produce aggregated definition-source values like `PMID:749327|PMID:16031427|PMID:16031388`.
+- Confirm output file is saved as `.xlsx` only, not CSV.
+
