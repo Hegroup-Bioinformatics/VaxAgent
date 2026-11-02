@@ -270,3 +270,71 @@ See `prompts/format-conversion-VO.txt` for the reusable prompt content.
 - Confirm selected duplicate groups produce aggregated definition-source values like `PMID:749327|PMID:16031427|PMID:16031388`.
 - Confirm output file is saved as `.xlsx` only, not CSV.
 
+**Manual Review of Brucella Vaccine Candidates in Step 4.1**
+
+- Review the `Proposed_VO_Definition` column to ensure that each definition is unique and correctly incorporates the unique label phrase when applicable.
+- Verify that any appended suffixes like `; with {suffix}` or `(variant n)` are correctly applied and do not duplicate existing information in the definition.
+- Check that the `Parent (name)` and other metadata fields are correctly populated according to the rules specified in the prompt. And double-check that any derived values, such as those based on pathogen + vaccine type logic, are the terms used in the VO.
+- Ensure that the `definition source` column correctly aggregates PMIDs from both the master record and any duplicate-related records for each `Vaccine Num`. 
+- Confirm that the exported workbook maintains the correct order of rows based on `Vaccine Num` and excludes any duplicate records.
+- Verify that the static metadata fields such as `term editor`, `inSubset`, and `Category` are correctly populated in the exported workbook.  
+
+**Step 4.2: Generate the final VO template with sequential IDs and textual definitions**
+
+**Main task**: Starting from the reviewed Step 4.1 workbook, generate the final ontology-ready workbook for step 4.2 by keeping all original columns, adding a `Proposed_VO_Definition` field, and assigning VO IDs in sequence. This produces a clean output that is ready for downstream VO review and curation.
+
+**Input**:
+- `outputs/Step4.1_new_Brucella_vaccines_VO_reviewed.xlsx`
+- `scripts/build_step4_2_vaccine_definitions.py`
+- `prompts/vo-vaccine-definition_prompt.txt` (ontology definition guidance and wording constraints)
+
+**Required output**:
+- `outputs/Step4.2_new_Brucella_vaccines_template.xlsx`
+
+**Reusable script**:
+- `scripts/build_step4_2_vaccine_definitions.py`
+
+**Generation workflow**:
+1. Read the Step 4.1 reviewed workbook.
+2. Preserve every existing column from the source workbook.
+3. Generate a new `Proposed_VO_Definition` for each row using the label plus parent metadata, rather than replacing the original record fields.
+4. Apply sentence-case formatting, remove awkward phrasing, and normalize repeated fragments before writing the final definition.
+5. When the `LABEL` contains distinguishing details such as antigen, mutant, adjuvant, strain, or target gene names, incorporate those details into the textual definition so it stays specific and unique.
+6. Enforce uniqueness of the definitions across the workbook by checking for duplicate text and adding a variant suffix or label-specific qualifier when necessary.
+7. Assign sequential VO IDs beginning from `VO:0009029` and populate the `ID` column for every row.
+8. Save the final workbook as `.xlsx` only.
+
+**VO ID assignment**:
+- Start value: `VO:0009029`
+- Format: `VO:{number:07d}`
+- Example sequence: `VO:0009029`, `VO:0009030`, `VO:0009031`, ...
+- The script writes the IDs in row order, preserving the workbook’s step 4.1 ordering after filtering and cleaning.
+
+**Proposed textual definition rules**:
+- The value should be a sentence-style ontology definition, beginning with a capitalized phrase in sentence case.
+- It should describe the vaccine in natural, concise language based on the `Parent (name)` and the label details.
+- Whenever available, include the distinguishing feature from the label, such as:
+  - antigen or target protein name
+  - mutant or deletion designations
+  - strain names and derived vaccine context
+  - adjuvant details or formulation notes
+  - RNA/DNA/protein/vector or subunit-type distinctions
+- Keep definitions specific enough to distinguish similar vaccine records from one another while avoiding repeated wording across rows.
+
+**Example command**:
+```bash
+cd /Users/jiezhen/Documents/Ontology/VaxAgent
+python scripts/build_step4_2_vaccine_definitions.py
+```
+
+**Validation checks**:
+- Confirm the output workbook exists at `outputs/Step4.2_new_Brucella_vaccines_template.xlsx`.
+- Confirm the first ID is `VO:0009029` and the IDs continue sequentially.
+- Confirm `Proposed_VO_Definition` is populated for every row.
+- Confirm no duplicate definition strings remain across the workbook.
+- Confirm wording is sentence-case and not overly generic.
+
+**Manual Review of Brucella Vaccine Candidates in Step 4.2**
+- Review the `Proposed_VO_Definition` column to ensure that each definition is unique and correctly incorporates the unique label phrase when applicable.
+- Verify assigned VO IDs are sequential and correctly formatted according to the specified pattern (`VO:{number:07d}`).
+
