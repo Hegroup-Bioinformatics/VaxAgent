@@ -338,3 +338,72 @@ python scripts/build_step4_2_vaccine_definitions.py
 - Review the `Proposed_VO_Definition` column to ensure that each definition is unique and correctly incorporates the unique label phrase when applicable.
 - Verify assigned VO IDs are sequential and correctly formatted according to the specified pattern (`VO:{number:07d}`).
 
+---
+
+### Step 5: VIOLIN Database Integration
+
+**Purpose**: Convert the reviewed Brucella vaccines into VIOLIN-compatible tables, reconcile publication references and VO IDs, and prepare host-response records.
+
+#### Inputs
+
+| File | Use |
+|------|-----|
+| `outputs/Step3.2_new_Brucella_vaccines_reviewed.xlsx` | Final reviewed vaccine candidates and supporting PMIDs |
+| `outputs/Step4.2_new_Brucella_vaccines_template_reviewed.xlsx` | Reviewed VO vaccine labels, definitions, and IDs |
+| `violin-data/t_vaccine.csv` | VIOLIN vaccine schema and existing records |
+| `violin-data/t_reference.csv` | Existing publication/reference records |
+| `violin-data/t_host.csv` | Experimental host IDs |
+| `violin-data/t_host_response.csv` | Host-response table schema |
+
+#### 5.1. Reference matching
+
+1. Match supporting PMIDs to existing VIOLIN references; prepare records only for missing references.
+2. Send the reference import CSV to Leo **without** `c_reference_id`, since the database assigns its own IDs.
+3. Use Leo's post-import reference export when preparing vaccine citations. Do not reuse provisional reference IDs from early Task 5/Task 6 drafts.
+
+**Reference import CSV**: `outputs/Step5_new_Brucella_references_VIOLIN.csv` (495 rows, 28 columns; `c_reference_id` omitted). Check that this matches the file Leo received.
+
+**Completed import**: 495 new publication references; existing reference IDs were reused where applicable.
+
+**Historical files**: `outputs/task5_new_references.csv` and `outputs/task5_summary.md` may describe an earlier conversion and are not the final 495-reference import report.
+
+#### 5.2. Vaccine loading
+
+The initial conversion helper is `scripts/build_task5_violin_files.py`. Its original Rooney-reviewed input and preliminary output counts differ from the later finalized Step 3.2/VO mapping. Do **not** regenerate the approved file with the older script without first updating and checking its inputs and mapping rules.
+
+**Final vaccine file**: `outputs/Step5_new_Brucella_vaccines_VIOLIN.csv`.
+
+- 592 distinct vaccine records, 31 columns, in VIOLIN `t_vaccine` format.
+- `c_vo_id` is populated from the reviewed Step 4.2 vaccine mapping.
+- Reference citations use VIOLIN's assigned reference IDs.
+- `c_vaccine_id` is blank in the pre-import file; Leo assigned the database IDs during loading.
+- The 592 imported vaccine IDs were reconciled with Leo's `t_vaccine_202610261553.csv` export.
+
+#### 5.3. Host-response preparation
+
+Map the reviewed Step 3.2 experimental evidence into the 21-column `t_host_response` schema:
+
+| Source field | VIOLIN field(s) |
+|-------------|-----------------|
+| `Lab Model or Cell` | `c_host_id`, `c_host_strain`, `c_cellType` |
+| `Vaccine Introduction`; `Experiment Used to Investigate the Vaccine` | `c_vaccination_protocol`, `c_route`, `c_challenge_protocol` |
+| `Immune Response` | `c_immune_response` |
+| `Vaccine Efficacy` | `c_protection_efficacy` |
+
+**Final handoff file**: `outputs/Step5_Brucella_host_responses_VIOLIN.csv`.
+
+- 429 proposed host-response records, 21 columns.
+- `c_vaccine_id` links to Leo's assigned VIOLIN vaccine IDs; `c_host_response_id` remains blank for database assignment.
+- Four records from the earlier 433-row draft were withheld after targeted review.
+- Jie spot-checked this version and approved sending it to Leo for import on October 29, 2026. Approval to send does not itself confirm that all 429 responses are live in VIOLIN.
+- LLM PMID-review experiments generated separate QA suggestions; those suggestions were **not** merged into this file. Further full-text checks can be performed after import.
+
+#### Validation and manual review
+
+1. Confirm 592 vaccine rows and a populated `c_vo_id` for each record.
+2. Confirm 429 host-response rows with `c_vaccine_id` and `c_host_id` populated; preserve the 21-column schema.
+3. Check vaccine-to-PMID attribution and distinguish vaccination administration routes from pathogen-challenge routes.
+4. Keep uncertain experimental details blank rather than inferring them.
+5. Verify successful loading with Leo's current VIOLIN database exports before marking host-response integration complete.
+
+**Cleanup note**: Older `task6_*` files, preliminary vaccine/reference CSVs, host-response drafts, and LLM test outputs are working materials. Keep any source evidence needed for traceability, but do not treat these older files as the approved Step 5 loading files.
